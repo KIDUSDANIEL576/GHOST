@@ -1,0 +1,6 @@
+{
+  "name": "Ghost Universal",
+  "description": "Ghost Universal engineering console for monitoring mutations, snapshots, and systems health.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
