@@ -151,26 +151,26 @@ export function Timeline() {
     setRestoringId(null);
   };
 
-  if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 text-orange-600 animate-spin"/></div>;
-  if (error) return <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center shadow-xs"><p className="text-red-700 font-medium">{error}</p><button onClick={refresh} className="mt-3 text-sm text-slate-500 hover:text-slate-800 flex items-center gap-1 mx-auto cursor-pointer font-medium"><RefreshCw className="h-3.5 w-3.5"/>Retry</button></div>;
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 text-ghost-orange animate-spin"/></div>;
+  if (error) return <div className="rounded-xl border border-red-900/60 bg-red-950/15 p-6 text-center shadow-sm"><p className="text-red-400 font-semibold">{error}</p><button onClick={refresh} className="mt-3 text-sm text-slate-400 hover:text-slate-200 flex items-center gap-1 mx-auto cursor-pointer font-bold"><RefreshCw className="h-3.5 w-3.5"/>Retry</button></div>;
 
   return (
     <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">
-          <Clock className="h-5 w-5 text-orange-600"/>Timeline
+        <h2 className="text-xl font-bold flex items-center gap-2 text-white">
+          <Clock className="h-5 w-5 text-ghost-orange"/>Timeline
           <span className="text-xs text-slate-400 font-normal">({snapshots.length})</span>
         </h2>
         <div className="flex items-center gap-2">
-          <button onClick={refresh} className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"><RefreshCw className="h-4 w-4"/></button>
+          <button onClick={refresh} className="p-1.5 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"><RefreshCw className="h-4 w-4"/></button>
           {showInput
             ? <form onSubmit={async e => { e.preventDefault(); if (!newLabel.trim()) return; await createSnap(newLabel.trim()); toast.success(`📸 "${newLabel}" saved`); setNewLabel(''); setShowInput(false); }} className="flex items-center gap-2">
-                <input autoFocus value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Snapshot name..." className="text-xs bg-white border border-slate-200 rounded-lg px-3 py-1.5 w-36 outline-none focus:border-orange-500 text-slate-800 placeholder:text-slate-400 font-sans shadow-2xs" onKeyDown={e => e.key === 'Escape' && setShowInput(false)}/>
-                <button type="submit" className="text-xs px-2.5 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors cursor-pointer font-semibold">Save</button>
-                <button type="button" onClick={() => setShowInput(false)} className="text-slate-400 hover:text-slate-600 text-xs cursor-pointer ml-1">✕</button>
+                <input autoFocus value={newLabel} onChange={e => setNewLabel(e.target.value)} placeholder="Snapshot name..." className="text-xs bg-[#1E2551] border border-slate-700/85 rounded-lg px-3 py-1.5 w-36 outline-none focus:border-ghost-orange text-white placeholder:text-slate-500 font-sans shadow-inner" onKeyDown={e => e.key === 'Escape' && setShowInput(false)}/>
+                <button type="submit" className="text-xs px-3 py-1.5 bg-ghost-orange hover:bg-ghost-orange/80 text-white rounded-lg transition-colors cursor-pointer font-bold">Save</button>
+                <button type="button" onClick={() => setShowInput(false)} className="text-slate-400 hover:text-slate-200 text-xs cursor-pointer ml-1">✕</button>
               </form>
-            : <button onClick={() => setShowInput(true)} className="text-xs px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg text-slate-700 transition-colors shadow-2xs cursor-pointer font-semibold">+ Save Now</button>
+            : <button onClick={() => setShowInput(true)} className="text-xs px-3 py-1.5 bg-[#1C2246] hover:bg-[#252E5E] border border-slate-700/80 rounded-lg text-slate-200 transition-colors shadow-sm cursor-pointer font-bold">+ Save Now</button>
           }
         </div>
       </div>
@@ -178,34 +178,34 @@ export function Timeline() {
       {/* Restore last working CTA */}
       <button onClick={async () => { const ok = await restoreLastWorking(); toast[ok ? 'success' : 'error'](ok ? '✅ Restored to last working state!' : 'No working snapshot found'); }}
         disabled={restoring}
-        className="w-full flex items-center justify-center gap-3 py-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl text-emerald-800 font-bold transition-all disabled:opacity-50 cursor-pointer shadow-2xs">
-        <Undo2 className="h-5 w-5"/>{restoring ? 'Restoring...' : '⚡ Restore Last Working State'}
+        className="w-full flex items-center justify-center gap-3 py-3 bg-emerald-950/20 hover:bg-emerald-950/45 border border-emerald-800/85 rounded-xl text-[#06D6A0] font-bold transition-all disabled:opacity-50 cursor-pointer shadow-sm">
+        <Undo2 className="h-5 w-5 animate-pulse"/>{restoring ? 'Restoring state...' : '⚡ Restore Last Working State (AI Rescue)'}
       </button>
 
       {/* Empty */}
-      {snapshots.length === 0 && <div className="text-center py-12 text-slate-400 bg-white border border-slate-205 rounded-xl"><p className="text-4xl mb-3">👻</p><p className="font-medium text-slate-500">No snapshots yet. Ghost is watching your code.</p></div>}
+      {snapshots.length === 0 && <div className="text-center py-12 text-slate-400 bg-ghost-surface border border-slate-800 rounded-xl"><p className="text-4xl mb-3">👻</p><p className="font-bold text-slate-300">No snapshots yet. Ghost is watching your code.</p></div>}
 
       {/* List */}
       <div className="space-y-2">
         {snapshots.map((snap, i) => (
           <motion.div key={snap.id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}
-            className={`rounded-xl border transition-colors ${
+            className={`rounded-xl border transition-all ${
               restoringId === snap.id
-                ? 'border-amber-400 bg-amber-50/35 shadow-xs'
+                ? 'border-amber-500/80 bg-amber-950/15 shadow-sm animate-pulse'
                 : i === 0
-                ? 'border-orange-400/80 bg-orange-50/20 shadow-xs'
-                : 'border-slate-200 bg-white hover:bg-slate-50/50 shadow-2xs'
+                ? 'border-ghost-orange/60 bg-[#FF6B35]/5 shadow-sm'
+                : 'border-slate-800/85 bg-ghost-surface hover:bg-[#202747]/40 shadow-xs'
             }`}>
             <div className="flex items-center gap-3 px-4 py-3">
-              <div className={`w-2 h-2 rounded-full flex-none mt-0.5 ${restoringId === snap.id ? 'bg-amber-500 animate-pulse' : i === 0 ? 'bg-orange-600' : 'bg-slate-300'}`}/>
+              <div className={`w-2 h-2 rounded-full flex-none mt-0.5 ${restoringId === snap.id ? 'bg-amber-500 animate-pulse' : i === 0 ? 'bg-ghost-orange animate-pulse' : 'bg-slate-600'}`}/>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm truncate text-slate-800">{snap.label}</span>
-                  {i === 0 && <span className="text-[10px] bg-orange-100 text-orange-850 px-1.5 py-0.5 rounded font-sans font-bold border border-orange-200/55">Current</span>}
-                  {!snap.isValid && <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-sans font-bold border border-red-200">Invalid</span>}
+                  <span className="font-semibold text-sm truncate text-white">{snap.label}</span>
+                  {i === 0 && <span className="text-[10px] bg-[#FF6B35]/15 text-ghost-orange px-1.5 py-0.5 rounded font-sans font-bold border border-ghost-orange/30">Current</span>}
+                  {!snap.isValid && <span className="text-[10px] bg-[#EF476F]/15 text-ghost-red px-1.5 py-0.5 rounded font-sans font-bold border border-ghost-red/35">Invalid</span>}
                   {restoringId === snap.id && (
-                    <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-sans font-bold border border-amber-200 animate-pulse flex items-center gap-1">
-                      <Loader2 className="h-2.5 w-2.5 animate-spin text-amber-700"/>
+                    <span className="text-[10px] bg-[#FFB627]/15 text-ghost-yellow px-1.5 py-0.5 rounded font-sans font-bold border border-[#FFB627]/30 animate-pulse flex items-center gap-1">
+                      <Loader2 className="h-2.5 w-2.5 animate-spin text-ghost-yellow"/>
                       Restoring...
                     </span>
                   )}
@@ -215,12 +215,12 @@ export function Timeline() {
                 </p>
               </div>
               <div className="flex items-center gap-1 flex-none">
-                <button onClick={() => setExpanded(expanded === snap.id ? null : snap.id)} className="p-1.5 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
+                <button onClick={() => setExpanded(expanded === snap.id ? null : snap.id)} className="p-1.5 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer">
                   {expanded === snap.id ? <ChevronDown className="h-4 w-4"/> : <ChevronRight className="h-4 w-4"/>}
                 </button>
                 {i !== 0 && (
                   <button onClick={() => handleRestore(snap.id, snap.label)} disabled={restoringId === snap.id || restoring}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-orange-50 hover:bg-orange-100/80 border border-orange-200 text-orange-800 rounded-lg transition-colors disabled:opacity-40 font-bold cursor-pointer shadow-2xs">
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[#FF6B35]/15 hover:bg-[#FF6B35]/25 border border-ghost-orange/40 text-ghost-orange rounded-lg transition-all disabled:opacity-40 font-bold cursor-pointer shadow-xs">
                     {restoringId === snap.id ? <Loader2 className="h-3.5 w-3.5 animate-spin"/> : <Undo2 className="h-3.5 w-3.5"/>}
                     {restoringId === snap.id ? '...' : 'Restore'}
                   </button>
@@ -231,21 +231,21 @@ export function Timeline() {
               {expanded === snap.id && (() => {
                 const meta = getSnapshotMeta(snap);
                 return (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden border-t border-slate-100 bg-slate-50/50">
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden border-t border-slate-800/80 bg-[#121733]/50">
                     <div className="p-4 sm:p-5 space-y-4 text-xs">
                       
                       {/* Top Header Information Panel */}
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 shadow-3xs">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 bg-[#171D3E] border border-slate-800 rounded-xl px-4 py-3 shadow-sm">
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-slate-700 bg-slate-200/80 border border-slate-300 px-2 py-0.5 rounded-md">
+                          <span className="font-mono text-xs font-bold text-slate-300 bg-[#232A55] border border-slate-705 px-2 py-0.5 rounded-md">
                             RESTORE VERSION: {meta.version}
                           </span>
-                          <span className="text-[10px] font-mono text-slate-400">
+                          <span className="text-[10px] font-mono text-slate-450 font-semibold">
                             {meta.sha}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[10.5px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md">
-                          <Activity className="h-3 w-3 text-emerald-600 animate-pulse"/>
+                        <div className="flex items-center gap-1.5 text-[10.5px] font-bold text-[#06D6A0] bg-emerald-950/20 border border-emerald-900/60 px-2 py-0.5 rounded-md">
+                          <Activity className="h-3 w-3 text-ghost-green animate-pulse"/>
                           <span>Ready for Real-Time Restore</span>
                         </div>
                       </div>
@@ -254,72 +254,72 @@ export function Timeline() {
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                         
                         {/* What This Helps By Restoring (Custom Specific details) */}
-                        <div className="md:col-span-8 bg-white border border-slate-200 rounded-xl p-4.5 space-y-3.5 shadow-2xs">
-                          <div className="flex items-center gap-2 text-slate-800 font-bold">
-                            <ShieldCheck className="h-4.5 w-4.5 text-emerald-650"/>
-                            <span className="font-sans text-xs">Independent Diagnostic Report & Restored Scope</span>
+                        <div className="md:col-span-8 bg-[#131938] border border-slate-800 rounded-xl p-4.5 space-y-3.5 shadow-sm">
+                          <div className="flex items-center gap-2 text-white font-bold">
+                            <ShieldCheck className="h-4.5 w-4.5 text-ghost-green"/>
+                            <span className="font-sans text-xs">Sandbox Diagnostic Report & Restored Scope</span>
                           </div>
                           
                           <div className="space-y-1.5 focus:outline-none">
-                            <span className="font-bold text-slate-500 block text-[10px] uppercase tracking-wider">HOW RESTORING THIS CHECKPOINT HELPS:</span>
-                            <p className="text-slate-650 leading-relaxed font-sans text-xs bg-slate-50/70 border border-slate-150 rounded-lg p-3">
+                            <span className="font-bold text-slate-400 block text-[10px] uppercase tracking-wider">HOW RESTORING THIS CHECKPOINT HELPS:</span>
+                            <p className="text-slate-300 leading-relaxed font-sans text-xs bg-[#1C2248]/55 border border-slate-800/80 rounded-lg p-3">
                               {meta.howItHelps}
                             </p>
                           </div>
 
-                          <div className="border-t border-slate-100 pt-3 space-y-1.5">
-                            <span className="font-bold text-slate-500 block text-[10px] uppercase tracking-wider">SPECIFIC WORKSPACE REMEDY:</span>
-                            <p className="text-slate-600 text-xs font-sans leading-relaxed">
-                              {meta.actionDetails} p-indexes are safely reconciled to keep compilation clean.
+                          <div className="border-t border-slate-800 pt-3 space-y-1.5">
+                            <span className="font-bold text-slate-400 block text-[10px] uppercase tracking-wider">SPECIFIC WORKSPACE REMEDY:</span>
+                            <p className="text-slate-300 text-xs font-sans leading-relaxed">
+                              {meta.actionDetails} Workspace indices are safely reconciled to keep compilation clean.
                             </p>
                           </div>
                         </div>
 
                         {/* Connection to Vibe Platforms Dashboard (Simulated active watchers) */}
-                        <div className="md:col-span-4 bg-slate-900 border border-slate-950 text-slate-200 rounded-xl p-4.5 space-y-3.5 shadow-xs font-sans relative overflow-hidden flex flex-col justify-between">
+                        <div className="md:col-span-4 bg-[#0C102A]/80 border border-slate-800 text-slate-200 rounded-xl p-4.5 space-y-3.5 shadow-xs font-sans relative overflow-hidden flex flex-col justify-between">
                           <div className="absolute right-2.5 top-2.5 opacity-5">
                             <Cpu className="h-14 w-14 text-white"/>
                           </div>
                           <div className="space-y-2">
-                            <div className="flex items-center gap-2 font-bold text-orange-400 text-xs">
-                              <Terminal className="h-4 w-4"/>
+                            <div className="flex items-center gap-2 font-bold text-ghost-orange text-xs">
+                              <Terminal className="h-4 w-4 animate-bounce"/>
                               <span>Vibe IDE Telemetry Sync</span>
                             </div>
-                            <p className="text-slate-350 leading-relaxed text-[11.5px]">
+                            <p className="text-slate-350 leading-relaxed text-[11.5px] font-medium">
                               Can it sync with vibe-coding platforms? Yes! Continuous WebSockets and Tauri IPC events instantly feed change snapshots from setups like Cursor, Bolt.new, v0.dev, and Lovable.
                             </p>
                           </div>
-                          <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-2.5 font-mono text-[10px] text-slate-350">
-                            <span className="text-orange-300 font-bold block mb-1">State Watcher:</span>
+                          <div className="bg-slate-950/70 border border-slate-800/80 rounded-lg p-2.5 font-mono text-[10px] text-slate-300">
+                            <span className="text-ghost-orange font-bold block mb-1">State Watcher:</span>
                             ⚡ {meta.vibeAccess}
                           </div>
                         </div>
                       </div>
 
                       {/* File Details list */}
-                      <div className="bg-white border border-slate-200 rounded-xl p-4.5 shadow-2xs space-y-3.5">
-                        <div className="flex items-center justify-between text-slate-700 font-bold border-b border-slate-100 pb-2 text-xs">
+                      <div className="bg-[#131938] border border-slate-800 rounded-xl p-4.5 shadow-sm space-y-3.5">
+                        <div className="flex items-center justify-between text-slate-300 font-bold border-b border-slate-800 pb-2 text-xs">
                           <span className="flex items-center gap-2">
-                            <FileCode2 className="h-4 w-4 text-orange-600"/> Reconciled Files ({meta.files.length} items)
+                            <FileCode2 className="h-4 w-4 text-ghost-orange animate-pulse"/> Reconciled Files ({meta.files.length} items)
                           </span>
-                          <span className="text-[10px] font-mono text-slate-400">STATE_KEY: snap_{snap.id.slice(-6)}</span>
+                          <span className="text-[10px] font-mono text-slate-500">STATE_KEY: snap_{snap.id.slice(-6)}</span>
                         </div>
                         <div className="space-y-2">
                           {meta.files.map((file: any, fIdx: number) => (
-                            <div key={fIdx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-y-1.5 gap-x-2 py-2 px-3 rounded-lg bg-slate-50 hover:bg-slate-100/40 transition-colors border border-slate-200/50">
+                            <div key={fIdx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-y-1.5 gap-x-2 py-2 px-3 rounded-lg bg-[#1C2248]/40 hover:bg-[#1C2248]/80 transition-colors border border-slate-800/60">
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="font-mono text-[11px] text-slate-850 font-semibold truncate">{file.name}</span>
+                                <span className="font-mono text-[11px] text-slate-200 font-bold truncate">{file.name}</span>
                                 <span className={`text-[9px] px-1.5 py-0.5 rounded font-sans font-bold border shrink-0 ${
-                                  file.status === 'Captured' ? 'bg-blue-50 text-blue-700 border-blue-200' :
-                                  file.status === 'Modified' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                                  file.status === 'Reverted' ? 'bg-red-50 text-red-700 border-red-200' :
-                                  file.status === 'Restored' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                  'bg-slate-100 text-slate-700 border-slate-250'
+                                  file.status === 'Captured' ? 'bg-[#0284C7]/15 text-[#38BDF8] border-[#0284C7]/30' :
+                                  file.status === 'Modified' ? 'bg-[#FFB627]/15 text-ghost-yellow border-[#FFB627]/30' :
+                                  file.status === 'Reverted' ? 'bg-[#EF476F]/15 text-ghost-red border-[#EF476F]/30' :
+                                  file.status === 'Restored' ? 'bg-[#06D6A0]/15 text-[#06D6A0] border-[#06D6A0]/30' :
+                                  'bg-[#232A55] text-slate-350 border-slate-700/80'
                                 }`}>{file.status}</span>
                               </div>
-                              <div className="flex items-center gap-3 text-[11px] text-slate-500 font-sans min-w-0">
-                                <span className="truncate text-slate-600">{file.desc}</span>
-                                <span className="font-mono text-[10px] font-bold bg-slate-200 px-1.5 py-0.5 rounded text-slate-650 shrink-0">{file.lines}</span>
+                              <div className="flex items-center gap-3 text-[11px] text-slate-400 font-sans min-w-0">
+                                <span className="truncate text-slate-400">{file.desc}</span>
+                                <span className="font-mono text-[10px] font-bold bg-[#232A55] border border-slate-705 px-1.5 py-0.5 rounded text-slate-300 shrink-0">{file.lines}</span>
                               </div>
                             </div>
                           ))}
@@ -327,7 +327,7 @@ export function Timeline() {
                       </div>
 
                       {/* Timestamp Info bar */}
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono px-1">
+                      <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono px-1">
                         <span>Real-Time Sandbox Sync: Fully Validated</span>
                         <span>Captured At: {new Date(snap.timestamp * 1000).toLocaleString()}</span>
                       </div>

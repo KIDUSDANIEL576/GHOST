@@ -1,6 +1,6 @@
 {
   "name": "Ghost Universal",
-  "description": "Ghost Universal engineering console for monitoring mutations, snapshots, and systems health.",
+  "description": "AI coding without fear. A local safety system that silently watches files, detects crashes, and restores working states.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

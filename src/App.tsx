@@ -105,44 +105,44 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-[#F5F7FA] text-slate-900 overflow-hidden font-sans">
+    <div className="h-screen flex flex-col bg-ghost-bg text-[#F7F9FB] overflow-hidden font-sans">
       <Toaster 
         position="top-right" 
         toastOptions={{ 
           style: { 
-            background: '#FFFFFF', 
-            color: '#0F172A', 
-            border: '1px solid #E2E8F0',
-            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.05)'
+            background: '#1A1E37', 
+            color: '#F7F9FB', 
+            border: '1px solid #2D3748',
+            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)'
           } 
         }}
       />
 
       {/* Header */}
-      <header className="flex-none border-b border-slate-200 bg-white px-6 py-4 flex items-center justify-between shadow-xs">
+      <header className="flex-none border-b border-slate-800 bg-[#0F142D] px-6 py-4 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Ghost className="h-7 w-7 text-orange-600"/>
+            <Ghost className="h-7 w-7 text-ghost-orange animate-pulse"/>
             <span className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full ${dot} animate-pulse`}/>
           </div>
           <div>
-            <h1 className="font-bold text-lg leading-none font-sans text-slate-900">Ghost Universal</h1>
-            <p className="text-[10px] text-slate-500 mt-1 font-mono font-medium">Time travel for vibe coders</p>
+            <h1 className="font-semibold text-lg leading-none font-sans text-white">Ghost Universal</h1>
+            <p className="text-[10px] text-ghost-orange mt-1 font-mono font-semibold">AI coding without fear.</p>
           </div>
         </div>
-        <span className="text-xs text-slate-500 font-mono tracking-wider font-semibold">{health?.overall ?? 'Starting...'}</span>
+        <span className="text-xs text-slate-400 font-mono tracking-wider font-semibold">{health?.overall ?? 'Starting...'}</span>
       </header>
 
       {/* Tabs */}
-      <nav className="flex-none flex border-b border-slate-200 bg-white px-6">
+      <nav className="flex-none flex border-b border-slate-800 bg-[#0F142D] px-6">
         {tabs.map(t => (
           <button 
             key={t.id} 
             onClick={() => setTab(t.id)}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 -mb-px transition-all cursor-pointer ${
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 -mb-px transition-all cursor-pointer ${
               tab === t.id 
-                ? 'text-orange-600 border-orange-600 font-semibold' 
-                : 'text-slate-500 border-transparent hover:text-slate-900'
+                ? 'text-ghost-orange border-ghost-orange font-bold' 
+                : 'text-slate-400 border-transparent hover:text-slate-200'
             }`}
           >
             <t.icon className="h-4 w-4"/>
@@ -152,12 +152,12 @@ export default function App() {
       </nav>
 
       {/* Quick actions bar */}
-      <div className="flex-none border-b border-slate-200/60 bg-slate-100/80 px-6 py-2">
+      <div className="flex-none border-b border-slate-800 bg-[#161B3B] px-6 py-2">
         <QuickActions />
       </div>
 
       {/* Content */}
-      <main className="flex-1 overflow-auto bg-[#F5F7FA]">
+      <main className="flex-1 overflow-auto bg-ghost-bg">
         <AnimatePresence mode="wait">
           <motion.div 
             key={tab} 
@@ -176,12 +176,12 @@ export default function App() {
                 <Settings />
 
                 {/* Simulation Control Card */}
-                <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4 shadow-sm">
-                  <div className="flex items-center gap-2 text-orange-600 font-bold text-sm">
+                <div className="rounded-xl border border-slate-800 bg-ghost-surface p-5 space-y-4 shadow-sm">
+                  <div className="flex items-center gap-2 text-ghost-orange font-bold text-sm">
                     <AlertCircle className="h-4 w-4" />
                     <span>PREVIEW & MONITORING SIMULATOR</span>
                   </div>
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  <p className="text-xs text-slate-400 leading-relaxed font-semibold">
                     Since the Rust filesystem watcher compiles specifically for desktop apps, you can use these simulation triggers to test visual notifications, reactive charts, and rollback flows live in this web preview.
                   </p>
 
@@ -189,14 +189,14 @@ export default function App() {
                     {simulateActive ? (
                       <button 
                         onClick={handleClearCrash}
-                        className="text-xs px-3 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 rounded-lg font-semibold transition-all cursor-pointer"
+                        className="text-xs px-3 py-2 bg-emerald-950/40 text-ghost-green hover:bg-emerald-950/60 border border-emerald-800/80 rounded-lg font-bold transition-all cursor-pointer"
                       >
                         ✅ Resolve Active Crash
                       </button>
                     ) : (
                       <button 
                         onClick={handleSimulateCrash}
-                        className="text-xs px-3 py-2 bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 rounded-lg font-semibold transition-all cursor-pointer"
+                        className="text-xs px-3 py-2 bg-red-950/40 text-ghost-red hover:bg-red-950/60 border border-red-800/80 rounded-lg font-bold transition-all cursor-pointer"
                       >
                         💥 Trigger Simulated Crash
                       </button>
@@ -204,9 +204,9 @@ export default function App() {
 
                     <button 
                       onClick={handleResetData}
-                      className="text-xs px-3 py-2 bg-slate-50 hover:bg-slate-100 rounded-lg text-slate-700 border border-slate-200 transition-all cursor-pointer flex items-center gap-1.5 font-medium shadow-2xs"
+                      className="text-xs px-3 py-2 bg-[#1E254A] hover:bg-[#252E5C] rounded-lg text-slate-200 border border-slate-700/80 transition-all cursor-pointer flex items-center gap-1.5 font-bold shadow-xs"
                     >
-                      <RefreshCw className="h-3 w-3" />
+                      <RefreshCw className="h-3 w-3 text-ghost-orange" />
                       Reset App State
                     </button>
                   </div>

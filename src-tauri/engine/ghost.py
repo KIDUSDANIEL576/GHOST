@@ -1,92 +1,39 @@
-import subprocess
-import sys
-import threading
-import os
-import time
-import sqlite3
+import subprocess, sys, threading, os, time, sqlite3
 
-GHOST_DIR = ".ghost"
-DB_PATH = os.path.join(GHOST_DIR, "ledger.db")
+GHOST_DIR  = ".ghost"
+DB_PATH    = os.path.join(GHOST_DIR, "ledger.db")
 ENGINE_DIR = os.path.dirname(__file__)
 
 
-def start_watcher():
-    """Run watcher.py in a background thread."""
-    subprocess.run([sys.executable, os.path.join(ENGINE_DIR, "watcher.py")])
-
-
-def init_database():
-    """Initialize .ghost directory and database."""
+def init():
     os.makedirs(GHOST_DIR, exist_ok=True)
-    schema_path = os.path.join(ENGINE_DIR, "schema.sql")
-
     if not os.path.exists(DB_PATH):
         conn = sqlite3.connect(DB_PATH)
-        with open(schema_path) as f:
-            conn.executescript(f.read())
+        conn.executescript(open(os.path.join(ENGINE_DIR,"schema.sql")).read())
         conn.close()
-        print(f"[Ghost] Database initialized: {DB_PATH}")
-    else:
-        print(f"[Ghost] Database exists: {DB_PATH}")
+    print(f"[Ghost] Ready. Data stays local: {os.path.abspath(DB_PATH)}")
 
 
-def run(dev_command: str):
-    """
-    Main entry point.
-    Wraps a dev command with Ghost monitoring.
-    Usage: python ghost.py "npm run dev"
-    """
-    print(f"[Ghost] Starting with command: {dev_command}")
-
-    # Step 1: Initialize database
-    init_database()
-
-    # Step 2: Start file watcher in background thread
-    watcher_thread = threading.Thread(target=start_watcher, daemon=True, name="Watcher")
-    watcher_thread.start()
-    print("[Ghost] File watcher started")
-
-    # Step 3: Pipe dev command through crash parser
+def run(cmd):
+    print(f"[Ghost] Monitoring: {cmd}")
+    init()
+    threading.Thread(
+        target=lambda: subprocess.run([sys.executable, os.path.join(ENGINE_DIR,"watcher.py")]),
+        daemon=True, name="Watcher").start()
     os.environ["GHOST_CLI_CONTEXT"] = "1"
-
-    dev_process = subprocess.Popen(
-        dev_command,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-        bufsize=1
-    )
-
-    crash_parser = subprocess.Popen(
-        [sys.executable, os.path.join(ENGINE_DIR, "crash_parser.py")],
-        stdin=subprocess.PIPE,
-        text=True,
-        bufsize=1
-    )
-
-    print(f"[Ghost] Monitoring started. Press Ctrl+C to stop.")
-
+    dev = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1)
+    parser = subprocess.Popen([sys.executable, os.path.join(ENGINE_DIR,"crash_parser.py")], stdin=subprocess.PIPE, text=True, bufsize=1)
+    print("[Ghost] Running. Ctrl+C to stop.")
     try:
-        for line in dev_process.stdout:
-            sys.stdout.write(line)
-            sys.stdout.flush()
-            try:
-                crash_parser.stdin.write(line)
-                crash_parser.stdin.flush()
-            except BrokenPipeError:
-                pass
-    except KeyboardInterrupt:
-        print("\n[Ghost] Stopping...")
-    finally:
-        dev_process.terminate()
-        crash_parser.terminate()
-        print("[Ghost] Stopped.")
+        for line in dev.stdout:
+            sys.stdout.write(line); sys.stdout.flush()
+            try: parser.stdin.write(line); parser.stdin.flush()
+            except BrokenPipeError: pass
+    except KeyboardInterrupt: pass
+    finally: dev.terminate(); parser.terminate(); print("[Ghost] Stopped.")
 
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python ghost.py '<dev-command>'")
-        print("Example: python ghost.py 'npm run dev'")
-        sys.exit(1)
+        print("Usage: python ghost.py '<command>'"); sys.exit(1)
     run(sys.argv[1])

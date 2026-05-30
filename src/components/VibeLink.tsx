@@ -331,11 +331,11 @@ export function VibeLink() {
       {/* Intro Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">
-            <Link2 className="h-5 w-5 text-orange-600"/>
+          <h2 className="text-xl font-bold flex items-center gap-2 text-white">
+            <Link2 className="h-5 w-5 text-ghost-orange"/>
             Vibe Link Extension Hub
           </h2>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
+          <p className="text-xs text-slate-400 mt-1 font-medium font-sans">
             Connect desktop code-watchdogs directly with browser preview debuggers and AI IDE engines (Cursor, Windsurf, IDX).
           </p>
         </div>
@@ -346,13 +346,13 @@ export function VibeLink() {
               setVibeActive(!vibeActive);
               toast.info(vibeActive ? 'Vibe Link service paused' : 'Vibe Link bridge active');
             }}
-            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-bold transition-colors cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg font-bold transition-all cursor-pointer ${
               vibeActive 
-                ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-850 border border-emerald-200' 
-                : 'bg-red-50 hover:bg-red-100 text-red-850 border border-red-200'
+                ? 'bg-emerald-950/20 hover:bg-emerald-950/40 text-ghost-green border border-emerald-800/80 shadow-sm' 
+                : 'bg-red-950/20 hover:bg-red-950/45 text-ghost-red border border-red-900/80 shadow-sm'
             }`}
           >
-            {vibeActive ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+            {vibeActive ? <Wifi className="h-3.5 w-3.5 animate-pulse" /> : <WifiOff className="h-3.5 w-3.5" />}
             {vibeActive ? 'Bridge Active' : 'Bridge Paused'}
           </button>
         </div>
@@ -362,32 +362,32 @@ export function VibeLink() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
         {/* Connection status card */}
-        <div className="md:col-span-2 rounded-xl border border-slate-200 bg-white p-5 flex flex-col justify-between space-y-4 shadow-2xs">
+        <div className="md:col-span-2 rounded-xl border border-slate-800 bg-[#131936] p-5 flex flex-col justify-between space-y-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 font-bold text-sm text-slate-850">
-              <Network className="h-4 w-4 text-orange-600" />
+            <div className="flex items-center gap-2 font-bold text-sm text-slate-205">
+              <Network className="h-4 w-4 text-ghost-orange" />
               <span>Active Agent Link Status</span>
             </div>
-            <span className="text-[10px] font-mono bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-slate-500 font-bold">
+            <span className="text-[10px] font-mono bg-[#1E2551] border border-slate-700/80 px-2 py-0.5 rounded text-slate-400 font-bold">
               IPC Port: {websocketPort}
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {agents.map(a => (
-              <div key={a.id} className="p-3.5 rounded-lg bg-slate-50 border border-slate-200/85 flex items-center justify-between shadow-3xs">
+              <div key={a.id} className="p-3.5 rounded-lg bg-[#1C2248]/40 border border-slate-800 flex items-center justify-between shadow-3xs hover:bg-[#1C2248]/75 transition-all">
                 <div className="min-w-0 pr-2">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-xs text-slate-800 truncate max-w-[120px]">{a.name}</span>
+                    <span className="font-bold text-xs text-white truncate max-w-[120px]">{a.name}</span>
                     <span className={`w-1.5 h-1.5 rounded-full flex-none ${
-                      a.status === 'connected' ? 'bg-emerald-500' : a.status === 'writing' ? 'bg-orange-500 animate-ping' : 'bg-slate-400'
+                       a.status === 'connected' ? 'bg-[#06D6A0]' : a.status === 'writing' ? 'bg-[#FF6B35] animate-ping' : 'bg-slate-600'
                     }`} />
                   </div>
-                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">Watched · {a.mutationsCount} mutations</p>
+                  <p className="text-[10px] text-slate-450 font-medium mt-0.5">Watched · {a.mutationsCount} mutations</p>
                 </div>
                 <button 
                   onClick={() => toggleAgent(a.id)}
-                  className="text-[10px] px-2.5 py-1 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold rounded cursor-pointer shadow-3xs"
+                  className="text-[10px] px-2.5 py-1 bg-[#232A55] border border-slate-705 hover:bg-[#2A3366] text-slate-250 font-bold rounded cursor-pointer shadow-3xs transition-all"
                 >
                   {a.status === 'disconnected' ? 'Enable' : 'Disable'}
                 </button>
@@ -399,14 +399,14 @@ export function VibeLink() {
             <button 
               onClick={handleSimulateVibeStorm}
               disabled={isSimulatingAgent || !vibeActive}
-              className="flex items-center gap-1.5 text-xs px-3.5 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-bold cursor-pointer disabled:opacity-40 transition-colors shadow-2xs"
+              className="flex items-center gap-1.5 text-xs px-3.5 py-2.5 bg-ghost-orange hover:bg-ghost-orange/80 text-white rounded-lg font-bold cursor-pointer disabled:opacity-40 transition-colors shadow-sm"
             >
               <Zap className="h-3.5 w-3.5 fill-current" />
               Simulate AI Rewrite Storm
             </button>
             <button 
               onClick={() => toast.success('IPC Config synced!')}
-              className="text-xs px-3.5 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg cursor-pointer flex items-center gap-1.5 font-bold shadow-2xs"
+              className="text-xs px-3.5 py-2.5 bg-[#1C2246] hover:bg-[#252E5E] border border-slate-700/80 text-slate-200 rounded-lg cursor-pointer flex items-center gap-1.5 font-bold shadow-sm transition-all"
             >
               <Settings className="h-3 w-3" />
               Config Port
@@ -415,50 +415,50 @@ export function VibeLink() {
         </div>
 
         {/* Info / Explanation Card */}
-        <div className="rounded-xl border border-slate-200 bg-linear-to-br from-slate-50 to-slate-100/70 p-5 flex flex-col justify-between shadow-2xs">
+        <div className="rounded-xl border border-slate-800 bg-linear-to-br from-[#171D3A]/90 to-[#121631]/80 p-5 flex flex-col justify-between shadow-xs">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-orange-600" />
-              <span className="font-bold text-sm text-slate-800">How it works</span>
+              <Sparkles className="h-4 w-4 text-ghost-orange" />
+              <span className="font-bold text-sm text-white">How it works</span>
             </div>
-            <p className="text-xs leading-relaxed text-slate-650 font-medium font-sans">
-              Ghost Universal sits in the background monitor stack. It exposes a local WebSocket endpoint (e.g. <code className="font-mono text-slate-700 font-bold px-1.5 py-0.5 rounded bg-slate-250/50 text-[10px]">localhost:4321</code>) that external editor plugins and browsers can link with.
+            <p className="text-xs leading-relaxed text-slate-300 font-semibold font-sans">
+              Ghost Universal sits in the background monitor stack. It exposes a local WebSocket endpoint (e.g. <code className="font-mono text-ghost-orange bg-ghost-orange/10 border border-ghost-orange/20 font-bold px-1.5 py-0.5 rounded text-[10px]">localhost:4321</code>) that external editor plugins and browsers can link with.
             </p>
-            <p className="text-xs leading-relaxed text-slate-650 font-medium font-sans">
+            <p className="text-xs leading-relaxed text-slate-300 font-semibold font-sans">
               Whenever an LLM agent issues safe/aggressive writing batches, Ghost halts potential broken compilation states, automatically auto-saves state, and pushes diagnostics.
             </p>
           </div>
           
-          <div className="border-t border-slate-200/80 pt-3.5 mt-4">
+          <div className="border-t border-slate-800/85 pt-3.5 mt-4">
             <a 
               href="https://github.com" 
               target="_blank" 
               rel="noreferrer"
-              className="flex items-center justify-between text-[11px] text-slate-500 hover:text-orange-600 font-semibold font-sans cursor-pointer"
+              className="flex items-center justify-between text-[11px] text-slate-400 hover:text-ghost-orange font-semibold font-sans cursor-pointer transition-all"
             >
               <span>Get Chrome Extension (CRX)</span>
-              <span className="text-[10px] text-orange-600">View source →</span>
+              <span className="text-[10px] text-ghost-orange">View source →</span>
             </a>
           </div>
         </div>
       </div>
 
       {/* WATCHER Sandbox Scan Map */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-5 shadow-2xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+      <div className="rounded-xl border border-slate-800 bg-[#131936] p-5 space-y-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
           <div>
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-              <Radio className="h-3.5 w-3.5 text-orange-600 animate-pulse" />
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 font-sans">
+              <Radio className="h-3.5 w-3.5 text-ghost-orange animate-pulse" />
               Browser Builders & Sandboxes Monitoring Deck
             </h3>
-            <p className="text-xs text-slate-400 font-medium mt-1">
+            <p className="text-xs text-slate-400 font-semibold mt-1 font-sans">
               Actively monitoring opened browser channels and browser context tool interfaces.
             </p>
           </div>
           <button
             onClick={handlePerformBrowserScan}
             disabled={isScanning}
-            className="flex items-center gap-1.5 text-xs px-3.5 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg font-bold cursor-pointer transition-colors disabled:opacity-50 shadow-2xs"
+            className="flex items-center gap-1.5 text-xs px-3.5 py-1.5 bg-[#1C2246] hover:bg-[#252E5E] border border-slate-700/80 text-slate-200 rounded-lg font-bold cursor-pointer transition-all disabled:opacity-50 shadow-sm"
           >
             <Search className={`h-3 w-3 ${isScanning ? 'animate-spin' : ''}`} />
             Scan Browser Tabs
@@ -472,7 +472,7 @@ export function VibeLink() {
             return (
               <div 
                 key={t.id} 
-                className="p-4 rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-slate-55 transition-all flex flex-col justify-between space-y-3 relative group shadow-3xs hover:border-orange-200 select-none cursor-pointer active:scale-[0.99]"
+                className="p-4 rounded-xl border border-slate-800 bg-[#1C2248]/40 hover:bg-[#1C2248]/85 transition-all flex flex-col justify-between space-y-3 relative group shadow-3xs hover:border-ghost-orange/60 select-none cursor-pointer active:scale-[0.99]"
                 title="Click to toggle simulated status"
                 onClick={() => {
                   const nextStatus = t.status === 'active' ? 'stopped' : 'active';
@@ -482,25 +482,25 @@ export function VibeLink() {
               >
                 <div className="flex items-start justify-between">
                   <div className="min-w-0 flex-1 pr-1">
-                    <h4 className="font-bold text-xs text-slate-800 flex items-center gap-1 group-hover:text-orange-700 transition-colors truncate">{t.name}</h4>
+                    <h4 className="font-bold text-xs text-slate-200 flex items-center gap-1 group-hover:text-ghost-orange transition-colors truncate">{t.name}</h4>
                     <p className="text-[10px] text-slate-450 font-mono font-medium mt-0.5 truncate">{t.domain}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-none">
-                    <span className={`text-[9.5px] px-1.5 py-0.5 rounded font-bold font-sans transition-all ${
+                    <span className={`text-[9.5px] px-1.5 py-0.5 rounded font-sans font-bold border transition-all ${
                       t.status === 'active' 
-                        ? 'bg-emerald-55 border-emerald-250 text-emerald-850' 
+                        ? 'bg-emerald-950/30 border-emerald-800/80 text-[#06D6A0]' 
                         : t.status === 'sleeping' 
-                          ? 'bg-amber-55 border-amber-250 text-amber-850' 
-                          : 'bg-slate-100 text-slate-500 border border-slate-205'
+                          ? 'bg-amber-950/20 border-amber-900/50 text-[#FFB627]' 
+                          : 'bg-slate-900 text-slate-400 border border-slate-800'
                     }`}>
                       {t.status.toUpperCase()}
                     </span>
-                    <span className="text-[8px] text-slate-400 group-hover:text-orange-500 transition-colors font-medium">Click to toggle</span>
+                    <span className="text-[8px] text-slate-500 group-hover:text-ghost-orange transition-colors font-semibold">Click to toggle</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] text-slate-455 font-medium border-t border-slate-150 pt-2.5">
-                  <span className="truncate">Key: <code className="text-orange-600 font-bold font-mono text-[9px]">{t.integrationKey}</code></span>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium border-t border-slate-800/80 pt-2.5">
+                  <span className="truncate">Key: <code className="text-ghost-orange font-bold font-mono text-[9px]">{t.integrationKey}</code></span>
                   <div className="flex items-center gap-2">
                     {!isDefault && (
                       <button
@@ -508,13 +508,13 @@ export function VibeLink() {
                           e.stopPropagation();
                           removeTool(t.id);
                         }}
-                        className="text-[9px] text-red-500 hover:text-red-700 font-bold border border-red-200 px-1.5 py-0.5 rounded bg-white"
+                        className="text-[9px] text-red-400 hover:text-red-350 font-bold border border-red-900/60 px-1.5 py-0.5 rounded bg-red-950/30 transition-all cursor-pointer"
                         title="Delete custom reference watcher"
                       >
                         Delete
                       </button>
                     )}
-                    <span className="flex items-center gap-1 text-[9px] text-slate-500 font-semibold font-sans">
+                    <span className="flex items-center gap-1 text-[9px] text-slate-400 font-semibold font-sans">
                       {t.detectable ? '🔓 Visible' : '🔒 Scoped'}
                     </span>
                   </div>
@@ -526,52 +526,52 @@ export function VibeLink() {
         </div>
 
         {/* Explanation & User Guide for Custom Local Ports / Sandboxes */}
-        <div className="bg-amber-50/60 border border-amber-200/80 rounded-xl p-4.5 text-xs text-slate-700 space-y-2 mt-2">
-          <p className="font-bold text-amber-950 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-amber-600 flex-none" />
+        <div className="bg-amber-950/10 border border-amber-900/40 rounded-xl p-4.5 text-xs text-slate-305 space-y-2 mt-2">
+          <p className="font-bold text-amber-500 flex items-center gap-2 font-sans">
+            <AlertCircle className="h-4 w-4 text-[#FFB627] flex-none" />
             <span>Understanding Local Ports and Custom Channels</span>
           </p>
-          <p className="leading-relaxed mb-1.5 font-medium text-slate-650">
-            When you run code generated by AI/vibe tools locally, your browser opens it on a local server address known as <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono text-[10px] text-orange-700 font-bold">localhost</code>.
+          <p className="leading-relaxed mb-1.5 font-medium text-slate-300 font-sans">
+            When you run code generated by AI/vibe tools locally, your browser opens it on a local server address known as <code className="bg-[#121631] px-1.5 py-0.5 rounded border border-slate-800 font-mono text-[10px] text-ghost-orange font-bold">localhost</code>.
           </p>
-          <ul className="list-disc pl-4.5 space-y-2.5 leading-relaxed font-semibold text-slate-600">
+          <ul className="list-disc pl-4.5 space-y-2.5 leading-relaxed font-semibold text-slate-400 font-sans">
             <li>
-              <span className="text-slate-800 font-bold">Where do I get the localhost address?</span> When you spin up a local development server in your terminal (using commands like <code className="bg-white px-1 font-mono text-[10px] text-slate-800 border border-slate-200 rounded">npm run dev</code> or <code className="bg-white px-1 font-mono text-[10px] text-slate-800 border border-slate-200 rounded">vite</code>), the terminal displays a line like: <span className="text-emerald-700 font-mono text-[10px] bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Local: http://localhost:5173/</span>.
+              <span className="text-white font-bold">Where do I get the localhost address?</span> When you spin up a local development server in your terminal (using commands like <code className="bg-[#1E2551] px-1 font-mono text-[10px] text-slate-200 border border-slate-700/80 rounded">npm run dev</code> or <code className="bg-[#1E2551] px-1 font-mono text-[10px] text-slate-200 border border-slate-700/80 rounded font-bold">vite</code>), the terminal displays a line like: <span className="text-[#06D6A0] font-mono text-[10px] bg-emerald-950/20 px-1.5 py-0.5 rounded border border-emerald-900/60">Local: http://localhost:5173/</span>.
             </li>
             <li>
-              <span className="text-slate-800 font-bold">How does Ghost use it?</span> Copy that address (e.g. <code className="bg-white px-1 font-mono text-[10px] border border-slate-200 rounded">localhost:5173</code> or <code className="bg-white px-1 font-mono text-[10px] border border-slate-200 rounded">localhost:3000</code>) and paste it below. Ghost will perform <span className="text-orange-700 font-bold">active, real-time fetching probes</span> to verify that server is responsive.
+              <span className="text-white font-bold">How does Ghost use it?</span> Copy that address (e.g. <code className="bg-[#1E2551] px-1 font-mono text-[10px] border border-slate-700/80 rounded text-amber-500 font-bold">localhost:5173</code>) and paste it below. Ghost will perform <span className="text-ghost-orange font-bold">active, real-time fetching probes</span> to verify that server is responsive.
             </li>
             <li>
-              <span className="text-slate-800 font-bold">No More Guesswork:</span> Platforms like <span className="text-slate-800 font-bold">Lovable</span> and <span className="text-slate-800 font-bold">Google AI Studio</span> are checked by inspecting your browser session referrer records. Only what is actually currently active will show as <span className="text-emerald-600 font-bold font-bold">ACTIVE</span>; others remain securely <span className="text-slate-450 font-bold">STOPPED</span>.
+              <span className="text-white font-bold">No More Guesswork:</span> Platforms like <span className="text-white font-bold">Lovable</span> and <span className="text-white font-bold">Google AI Studio</span> are checked by inspecting your browser session referrer records. Only what is currently active will show as <span className="text-[#06D6A0] font-bold">ACTIVE</span>; others remain securely <span className="text-slate-400 font-bold">STOPPED</span>.
             </li>
           </ul>
         </div>
 
         {/* Custom mount form */}
-        <form onSubmit={handleAddWorkspace} className="pt-3 border-t border-slate-200 flex flex-col sm:flex-row gap-3 items-end">
+        <form onSubmit={handleAddWorkspace} className="pt-3 border-t border-slate-800 flex flex-col sm:flex-row gap-3 items-end">
           <div className="flex-1 w-full space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Workspace Name</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Workspace Name</label>
             <input 
               type="text" 
               placeholder="e.g. StackBlitz Dev Shell" 
               value={newToolName} 
               onChange={e => setNewToolName(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-850 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-3xs font-medium"
+              className="w-full bg-[#1E2551] border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none focus:border-ghost-orange shadow-inner font-medium"
             />
           </div>
           <div className="flex-1 w-full space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Browser Domain Port</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Browser Domain Port</label>
             <input 
               type="text" 
               placeholder="e.g. localhost:5173" 
               value={newToolDomain} 
               onChange={e => setNewToolDomain(e.target.value)}
-              className="w-full bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-850 placeholder:text-slate-400 outline-none focus:border-orange-500 shadow-3xs font-medium"
+              className="w-full bg-[#1E2551] border border-slate-700/80 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none focus:border-ghost-orange shadow-inner font-medium"
             />
           </div>
           <button 
             type="submit"
-            className="flex items-center justify-center gap-1.5 text-xs px-4 py-2 bg-orange-50 hover:bg-orange-100/80 border border-orange-200 text-orange-800 rounded-lg font-bold transition-colors cursor-pointer w-full sm:w-auto flex-none shadow-2xs"
+            className="flex items-center justify-center gap-1.5 text-xs px-4 py-2 bg-ghost-orange/15 hover:bg-ghost-orange/25 border border-ghost-orange/30 text-ghost-orange rounded-lg font-bold transition-all cursor-pointer w-full sm:w-auto flex-none shadow-sm font-sans"
           >
             <Plus className="h-3.5 w-3.5" />
             Mount Custom Channel
@@ -580,17 +580,17 @@ export function VibeLink() {
       </div>
 
       {/* Toggle Interceptors */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xs">
-        <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-4">Interception Triggers</h3>
+      <div className="rounded-xl border border-slate-800 bg-[#131936] p-5 shadow-sm">
+        <h3 className="text-xs font-bold text-slate-405 uppercase tracking-wide mb-4">Interception Triggers</h3>
         
-        <div className="flex items-start justify-between gap-6 py-3 border-b border-slate-100">
+        <div className="flex items-start justify-between gap-6 py-3 border-b border-slate-800/80">
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-800">Pre-write Hot Backup</p>
-            <p className="text-[11px] text-slate-500 font-medium mt-0.5">Auto-saves state the millisecond Cursor/Windsurf open file streams.</p>
+            <p className="text-xs font-bold text-slate-200">Pre-write Hot Backup</p>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Auto-saves state the millisecond Cursor/Windsurf open file streams.</p>
           </div>
           <button 
             onClick={() => setAutoIntercept(!autoIntercept)}
-            className={`relative w-9 h-5 rounded-full transition-colors ${autoIntercept ? 'bg-orange-600' : 'bg-slate-200'} cursor-pointer`}
+            className={`relative w-9 h-5 rounded-full transition-colors ${autoIntercept ? 'bg-ghost-orange' : 'bg-slate-700'} cursor-pointer`}
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${autoIntercept ? 'translate-x-4' : ''}`}/>
           </button>
@@ -598,12 +598,12 @@ export function VibeLink() {
 
         <div className="flex items-start justify-between gap-6 py-3 last:border-0">
           <div className="flex-1">
-            <p className="text-xs font-bold text-slate-800">Self-Healing Feedback Loop</p>
-            <p className="text-[11px] text-slate-500 font-medium mt-0.5">Instantly rolls back broken node imports, syntax loops, and redirects stdout back to the Vibe agent stack trace context.</p>
+            <p className="text-xs font-bold text-slate-200">Self-Healing Feedback Loop</p>
+            <p className="text-[11px] text-slate-400 font-medium mt-0.5">Instantly rolls back broken node imports, syntax loops, and redirects stdout back to the Vibe agent stack trace context.</p>
           </div>
           <button 
             onClick={() => setAutoHeal(!autoHeal)}
-            className={`relative w-9 h-5 rounded-full transition-colors ${autoHeal ? 'bg-orange-600' : 'bg-slate-200'} cursor-pointer`}
+            className={`relative w-9 h-5 rounded-full transition-colors ${autoHeal ? 'bg-ghost-orange' : 'bg-slate-700'} cursor-pointer`}
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${autoHeal ? 'translate-x-4' : ''}`}/>
           </button>
@@ -611,30 +611,30 @@ export function VibeLink() {
       </div>
 
       {/* CHROME EXTENSION DECK - PRODUCING REAL-TIME READERS FOR ALL BROWSER ACTIVITY */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-5 shadow-2xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+      <div className="rounded-xl border border-slate-800 bg-[#131936] p-5 space-y-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800/85">
           <div>
-            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-              <Chrome className="h-4 w-4 text-orange-600 animate-spin-slow" />
+            <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <Chrome className="h-4 w-4 text-ghost-orange animate-spin-slow" />
               Chrome Extension Finalize Blueprint (v1.0.0-Beta Code)
             </h3>
-            <p className="text-xs text-slate-400 font-medium mt-1">
+            <p className="text-xs text-slate-400 font-medium mt-1 font-sans">
               Convert Ghost into a fully integrated Chrome Extension to listen and actively monitor tab activities in background contexts.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-500 font-bold">Simulator Feed:</span>
+            <span className="text-[10px] text-slate-400 font-bold font-sans">Simulator Feed:</span>
             <button
               type="button"
               onClick={() => {
                 setIsExtensionSimActive(!isExtensionSimActive);
                 toast.success(isExtensionSimActive ? "Simulated extension paused" : "Simulated extension streaming active!");
               }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
                 isExtensionSimActive
-                  ? 'bg-orange-50 text-orange-700 border border-orange-200'
-                  : 'bg-slate-100 text-slate-400 border border-slate-200'
+                  ? 'bg-ghost-orange/15 text-ghost-orange border border-ghost-orange/30'
+                  : 'bg-[#1E2551] text-slate-400 border border-slate-700/80 hover:bg-[#252E5E]'
               }`}
             >
               <Eye className="h-3 w-3" />
@@ -643,19 +643,19 @@ export function VibeLink() {
           </div>
         </div>
 
-        <p className="text-xs leading-relaxed font-semibold text-slate-650">
-          To actively track <code className="bg-slate-50 border border-slate-200 px-1 py-0.5 rounded font-mono font-bold text-orange-600">bolt.new</code>, <code className="bg-slate-50 border border-slate-200 px-1 py-0.5 rounded font-mono font-bold text-orange-600">lovable.dev</code>, and other fast-paced vibe compilers, the finalize step packages Ghost into a local browser add-on. The extension utilizes the <code className="bg-slate-50 border border-slate-200 px-1 py-0.5 rounded font-mono font-bold">chrome.tabs</code> background event loops and attaches a localized <code className="bg-slate-50 border border-slate-200 px-1 py-0.5 rounded font-mono font-bold">MutationObserver</code> into development sandboxes, relaying activity over our active WebSocket stream.
+        <p className="text-xs leading-relaxed font-semibold text-slate-300 font-sans">
+          To actively track <code className="bg-[#1C2248]/50 border border-slate-700/80 px-1 py-0.5 rounded font-mono font-bold text-ghost-orange">bolt.new</code>, <code className="bg-[#1C2248]/50 border border-slate-700/80 px-1 py-0.5 rounded font-mono font-bold text-ghost-orange">lovable.dev</code>, and other fast-paced vibe compilers, the finalize step packages Ghost into a local browser add-on. The extension utilizes the <code className="bg-[#1C2248]/50 border border-slate-700/80 px-1 py-0.5 rounded font-mono font-bold">chrome.tabs</code> background event loops and attaches a localized <code className="bg-[#1C2248]/50 border border-slate-700/80 px-1 py-0.5 rounded font-mono font-bold">MutationObserver</code> into development sandboxes, relaying activity over our active WebSocket stream.
         </p>
 
         {/* Tab Selector */}
-        <div className="flex border-b border-slate-250/60 overflow-x-auto space-x-1.5 pb-0.5">
+        <div className="flex border-b border-slate-800 overflow-x-auto space-x-1.5 pb-0.5">
           <button
             type="button"
             onClick={() => setSelectedExtFile('manifest')}
             className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-colors cursor-pointer border-t border-x ${
               selectedExtFile === 'manifest'
-                ? 'bg-slate-900 text-slate-100 border-slate-900'
-                : 'bg-slate-50/50 hover:bg-slate-100 text-slate-500 border-transparent'
+                ? 'bg-[#1E2551] text-white border-slate-700/80'
+                : 'bg-[#1C2248]/20 hover:bg-[#1C2248]/60 text-slate-400 border-transparent'
             }`}
           >
             <FileCode2 className="h-3 w-3 inline mr-1" />
@@ -666,8 +666,8 @@ export function VibeLink() {
             onClick={() => setSelectedExtFile('content')}
             className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-colors cursor-pointer border-t border-x ${
               selectedExtFile === 'content'
-                ? 'bg-slate-900 text-slate-100 border-slate-900'
-                : 'bg-slate-50/50 hover:bg-slate-100 text-slate-500 border-transparent'
+                ? 'bg-[#1E2551] text-white border-slate-700/80'
+                : 'bg-[#1C2248]/20 hover:bg-[#1C2248]/60 text-slate-400 border-transparent'
             }`}
           >
             <Code className="h-3 w-3 inline mr-1" />
@@ -678,8 +678,8 @@ export function VibeLink() {
             onClick={() => setSelectedExtFile('background')}
             className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-colors cursor-pointer border-t border-x ${
               selectedExtFile === 'background'
-                ? 'bg-slate-900 text-slate-100 border-slate-900'
-                : 'bg-slate-50/50 hover:bg-slate-100 text-slate-500 border-transparent'
+                ? 'bg-[#1E2551] text-white border-slate-700/80'
+                : 'bg-[#1C2248]/20 hover:bg-[#1C2248]/60 text-slate-400 border-transparent'
             }`}
           >
             <Cpu className="h-3 w-3 inline mr-1" />

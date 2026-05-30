@@ -239,7 +239,12 @@ export function Settings() {
             <Shield className={`h-6 w-6 ${pro ? 'text-orange-500' : 'text-gray-600'}`}/>
             <div>
               <p className="text-sm font-semibold">{pro ? '👻 Ghost Pro' : 'Free Tier'}</p>
-              <p className="text-xs text-gray-500">{pro ? 'All features unlocked' : '24h history · Upgrade for unlimited'}</p>
+              {/* ✅ Expert-corrected copy — privacy first */}
+              <p className="text-xs text-gray-500">
+                {pro
+                  ? 'Unlimited history · Still 100% local'
+                  : 'Local only · Your code never leaves your machine'}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">

@@ -1,197 +1,137 @@
-import sys
-import os
-import re
-import json
-import sqlite3
-import time
+import sys, os, re, json, sqlite3, time
 from typing import List, Dict
 
 DB_PATH = ".ghost/ledger.db"
-WINDOW_SEC = 180.0
+WINDOW  = 180.0
+
+# ── SCORING (correlation-based, not causal) ──────────────────
+# These scores show CORRELATION STRENGTH not probability of causation.
+# Ghost reduces search space. Ghost does not find root causes.
+SCORE_IN_STACK_TRACE   = 50
+SCORE_CHANGED_UNDER_30S = 20
+SCORE_CHANGED_UNDER_2M  = 15
+SCORE_IN_WINDOW         = 10
+SCORE_LINKED_BY_IMPORT  = 30
+SCORE_NEARBY_FILE       = 10
+SCORE_AI_PASTE          = 5
 
 
-def get_recent_mutations(crash_time: float) -> List[Dict]:
-    """Get file mutations in the window before crash."""
-    cutoff = crash_time - WINDOW_SEC
+def get_mutations(crash_time):
     try:
         conn = sqlite3.connect(DB_PATH, timeout=5)
         rows = conn.execute(
-            "SELECT file_path, timestamp, change_type FROM file_mutations "
-            "WHERE timestamp >= ? AND timestamp <= ? ORDER BY timestamp DESC",
-            (cutoff, crash_time)
-        ).fetchall()
+            "SELECT file_path,timestamp,change_type FROM file_mutations "
+            "WHERE timestamp>=? AND timestamp<=? ORDER BY timestamp DESC",
+            (crash_time - WINDOW, crash_time)).fetchall()
         conn.close()
-        return [{'path': r[0], 'ts': r[1], 'type': r[2]} for r in rows]
-    except Exception as e:
-        print(f"[Ghost/Ranker] DB read failed: {e}")
-        return []
+        return [{'path':r[0],'ts':r[1],'type':r[2]} for r in rows]
+    except: return []
 
 
-def score_suspects(mutations: List[Dict], crash_time: float,
-                   target_file: str, target_line: int) -> List[Dict]:
-    """
-    PRIMARY: Full heuristic scoring.
-    Score each file based on: recency + stack match + imports + directory.
-    """
+def heuristic_rank(mutations, crash_time, target_file, target_line):
     scores = {}
-
-    # Score by recency
     for m in mutations:
-        path = m['path']
+        p = m['path']
         age = crash_time - m['ts']
-
-        if path not in scores:
-            scores[path] = {'score': 0, 'signals': set(), 'context': m['type']}
-
+        if p not in scores:
+            scores[p] = {'score':0,'signals':set(),'context':m['type']}
         if age < 30:
-            scores[path]['score'] += 20
-            scores[path]['signals'].add('VERY_RECENT')
+            scores[p]['score'] += SCORE_CHANGED_UNDER_30S
+            scores[p]['signals'].add('CHANGED_RECENTLY')
         elif age < 120:
-            scores[path]['score'] += 15
-            scores[path]['signals'].add('RECENT')
+            scores[p]['score'] += SCORE_CHANGED_UNDER_2M
+            scores[p]['signals'].add('CHANGED_RECENTLY')
         else:
-            scores[path]['score'] += 10
-            scores[path]['signals'].add('IN_WINDOW')
-
+            scores[p]['score'] += SCORE_IN_WINDOW
+            scores[p]['signals'].add('IN_WINDOW')
         if m['type'] == 'TRACKED':
-            scores[path]['score'] += 5
-            scores[path]['signals'].add('AI_GENERATED')
+            scores[p]['score'] += SCORE_AI_PASTE
+            scores[p]['signals'].add('AI_PASTE_DETECTED')
 
-    # Score by stack trace match
-    if target_file and target_file not in ('None', ''):
+    if target_file and target_file not in ('None',''):
         if target_file not in scores:
-            scores[target_file] = {'score': 0, 'signals': set(), 'context': 'CRASH_FILE'}
-        scores[target_file]['score'] += 50
-        scores[target_file]['signals'].add('STACK_MATCH')
-
-        # Scan imports in crash file
+            scores[target_file] = {'score':0,'signals':set(),'context':'CRASH_FILE'}
+        scores[target_file]['score'] += SCORE_IN_STACK_TRACE
+        scores[target_file]['signals'].add('IN_STACK_TRACE')
         if os.path.exists(target_file):
             try:
                 content = open(target_file, encoding='utf-8', errors='ignore').read()
-                for path in list(scores.keys()):
-                    if path == target_file:
-                        continue
-                    base = os.path.splitext(os.path.basename(path))[0]
-                    if re.search(
-                        rf"(?:import|require).*['\"].*{re.escape(base)}",
-                        content, re.IGNORECASE
-                    ):
-                        scores[path]['score'] += 30
-                        scores[path]['signals'].add('IMPORTED_BY_CRASH')
-            except Exception:
-                pass
-
-        # Directory proximity
+                for p in list(scores):
+                    if p == target_file: continue
+                    base = os.path.splitext(os.path.basename(p))[0]
+                    if re.search(rf"(?:import|require).*['\"].*{re.escape(base)}",content,re.I):
+                        scores[p]['score'] += SCORE_LINKED_BY_IMPORT
+                        scores[p]['signals'].add('LINKED_BY_IMPORT')
+            except: pass
         crash_dir = os.path.dirname(target_file)
-        for path in scores:
-            if path != target_file and os.path.dirname(path) == crash_dir:
-                scores[path]['score'] += 10
-                scores[path]['signals'].add('SAME_DIR')
+        for p in scores:
+            if p != target_file and os.path.dirname(p) == crash_dir:
+                scores[p]['score'] += SCORE_NEARBY_FILE
+                scores[p]['signals'].add('NEARBY_FILE')
 
     return sorted(
-        [{'rank': 0, 'file': p, 'score': d['score'],
-          'signals': list(d['signals']), 'context': d['context']}
-         for p, d in scores.items()],
-        key=lambda x: x['score'], reverse=True
-    )[:5]
+        [{'rank':0,'file':p,'score':d['score'],'signals':list(d['signals']),'context':d['context']}
+         for p,d in scores.items()],
+        key=lambda x: x['score'], reverse=True)[:5]
 
 
-def fallback_score(mutations: List[Dict]) -> List[Dict]:
-    """FALLBACK: Rank by recency only (no imports scan)."""
+def recency_rank(mutations):
     seen = {}
     for m in mutations:
-        if m['path'] not in seen:
-            seen[m['path']] = m['ts']
-
-    ranked = sorted(seen.items(), key=lambda x: x[1], reverse=True)
-    return [
-        {'rank': i+1, 'file': p, 'score': 100 - i*15,
-         'signals': ['RECENCY_ONLY'], 'context': 'FALLBACK'}
-        for i, (p, _) in enumerate(ranked[:5])
-    ]
+        if m['path'] not in seen: seen[m['path']] = m['ts']
+    return [{'rank':i+1,'file':p,'score':100-i*15,'signals':['RECENCY_FALLBACK'],'context':'FALLBACK'}
+            for i,(p,_) in enumerate(sorted(seen.items(),key=lambda x:x[1],reverse=True)[:5])]
 
 
-def emergency_score() -> List[Dict]:
-    """EMERGENCY: Sort all project files by mtime. Always works."""
+def emergency_rank():
     files = []
-    for root, dirs, filenames in os.walk(os.getcwd()):
-        dirs[:] = [d for d in dirs if d not in
-                   {'node_modules', '.git', '.ghost', '__pycache__', '.next', 'dist'}]
-        for f in filenames:
-            path = os.path.join(root, f)
+    for root,dirs,fnames in os.walk(os.getcwd()):
+        dirs[:] = [d for d in dirs if d not in {'node_modules','.git','.ghost','__pycache__','.next','dist'}]
+        for f in fnames:
             try:
-                rel = os.path.relpath(path, os.getcwd())
-                files.append((rel, os.path.getmtime(path)))
-            except OSError:
-                continue
-
-    files.sort(key=lambda x: x[1], reverse=True)
-    return [
-        {'rank': i+1, 'file': p, 'score': 100 - i*15,
-         'signals': ['EMERGENCY'], 'context': 'EMERGENCY'}
-        for i, (p, _) in enumerate(files[:5])
-    ]
+                fp = os.path.join(root,f)
+                files.append((os.path.relpath(fp,os.getcwd()), os.path.getmtime(fp)))
+            except: continue
+    files.sort(key=lambda x:x[1],reverse=True)
+    return [{'rank':i+1,'file':p,'score':100-i*15,'signals':['EMERGENCY'],'context':'EMERGENCY'}
+            for i,(p,_) in enumerate(files[:5])]
 
 
-def print_hud(suspects: List[Dict], target_file: str, target_line: int):
-    """Print terminal crash report."""
-    print(f"\n\033[41m\033[97m 👻 GHOST: CRASH DETECTED \033[0m")
-    print(f"\033[90mCrash at:\033[0m {target_file}:{target_line}")
-    print("\033[90m" + "─" * 55 + "\033[0m")
-    print("Likely causes (ranked):\n")
-
-    colors = ['\033[91m', '\033[93m', '\033[97m', '\033[90m', '\033[90m']
-
-    for i, s in enumerate(suspects[:3]):
-        s['rank'] = i + 1
-        c = colors[min(i, len(colors)-1)]
-        print(f" {c}{i+1}. {s['file']}\033[0m  (score: {s['score']})")
+def print_hud(suspects, target_file, target_line):
+    print(f"\n\033[41m\033[97m 👻 GHOST: SEARCH SPACE REDUCED \033[0m")
+    print(f"Crash at: {target_file}:{target_line}")
+    print("─"*55)
+    # Ghost shows correlation, not causation.
+    print("Files to check first (ranked by correlation):\n")
+    colors = ['\033[91m','\033[93m','\033[97m','\033[90m','\033[90m']
+    for i,s in enumerate(suspects[:3]):
+        s['rank'] = i+1
+        print(f" {colors[min(i,4)]}{i+1}. {s['file']}\033[0m  (score: {s['score']})")
         print(f"    \033[90m{', '.join(s['signals'])}\033[0m\n")
+    print("\033[94m[1] Restore Last Working  [2] View Timeline  [3] Skip\033[0m\n")
 
-    print("\033[94m[1] Restore Last Working  [2] View Diff  [3] Skip\033[0m\n")
 
-
-def rank(crash_time: float, target_file: str, target_line: int):
-    """Main entry. Returns ranked suspects via all 3 methods."""
+def rank(crash_time, target_file, target_line):
     suspects = []
-
-    # Method 1: Full heuristic
     try:
-        mutations = get_recent_mutations(crash_time)
-        if mutations:
-            suspects = score_suspects(mutations, crash_time, target_file, target_line)
-    except Exception as e:
-        print(f"[Ghost/Ranker] Heuristic failed: {e}")
-
-    # Method 2: Fallback
+        m = get_mutations(crash_time)
+        if m: suspects = heuristic_rank(m, crash_time, target_file, target_line)
+    except Exception as e: print(f"[Ranker] Heuristic failed: {e}")
     if not suspects:
         try:
-            mutations = get_recent_mutations(crash_time)
-            suspects = fallback_score(mutations)
-        except Exception as e:
-            print(f"[Ghost/Ranker] Fallback failed: {e}")
-
-    # Method 3: Emergency (always works)
+            m = get_mutations(crash_time)
+            suspects = recency_rank(m)
+        except: pass
     if not suspects:
-        suspects = emergency_score()
-
-    # Assign ranks
-    for i, s in enumerate(suspects):
-        s['rank'] = i + 1
-
+        suspects = emergency_rank()
+    for i,s in enumerate(suspects): s['rank'] = i+1
     print_hud(suspects, target_file, target_line)
-
-    # Output JSON for Tauri to parse
-    print(f"GHOST_JSON:{json.dumps({'suspects': suspects, 'crashFile': target_file, 'crashLine': target_line})}")
-
+    print(f"GHOST_JSON:{json.dumps({'suspects':suspects,'crashFile':target_file,'crashLine':target_line})}")
     return suspects
 
 
 if __name__ == "__main__":
     if len(sys.argv) >= 4:
-        crash_time = float(sys.argv[1])
-        target_file = sys.argv[2] if sys.argv[2] != 'None' else ''
-        target_line = int(sys.argv[3]) if sys.argv[3].isdigit() else 0
-        rank(crash_time, target_file, target_line)
-    else:
-        print("Usage: python ranker.py <crash_time> <file> <line>")
+        rank(float(sys.argv[1]),
+             sys.argv[2] if sys.argv[2]!='None' else '',
+             int(sys.argv[3]) if sys.argv[3].isdigit() else 0)
