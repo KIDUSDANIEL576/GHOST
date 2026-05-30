@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Ghost, Clock, AlertTriangle, Activity, Settings as SettingsIcon, AlertCircle, RefreshCw, Link2 } from 'lucide-react';
+import { Ghost, Clock, AlertTriangle, Activity, Settings as SettingsIcon, AlertCircle, RefreshCw, Link2, BookOpen } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import { Timeline } from './components/Timeline';
 import { CrashDashboard } from './components/CrashDashboard';
@@ -10,8 +10,9 @@ import { useHealth } from './hooks/useHealth';
 import { Settings } from './components/Settings';
 import { useCrashNotification } from './hooks/useCrashNotification';
 import { VibeLink } from './components/VibeLink';
+import { Manual } from './components/Manual';
 
-type Tab = 'timeline' | 'crashes' | 'health' | 'vibelink' | 'settings';
+type Tab = 'timeline' | 'crashes' | 'health' | 'vibelink' | 'manual' | 'settings';
 
 export default function App() {
   const [tab, setTab] = useState<Tab>('timeline');
@@ -20,6 +21,20 @@ export default function App() {
 
   // Initialize background browser notification daemon for crashes
   useCrashNotification();
+
+  useEffect(() => {
+    const raw = localStorage.getItem('ghost_settings_v1');
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed.theme === 'light') {
+          document.body.classList.add('light-theme');
+        } else {
+          document.body.classList.remove('light-theme');
+        }
+      } catch (e) {}
+    }
+  }, []);
 
   useEffect(() => {
     // Check if a crash is currently active in localStorage
@@ -52,6 +67,7 @@ export default function App() {
     { id: 'crashes' as Tab, icon: AlertTriangle, label: 'Crashes' },
     { id: 'health' as Tab, icon: Activity, label: 'Health' },
     { id: 'vibelink' as Tab, icon: Link2, label: 'Vibe Link' },
+    { id: 'manual' as Tab, icon: BookOpen, label: 'Manual' },
     { id: 'settings' as Tab, icon: SettingsIcon, label: 'Settings' },
   ];
 
@@ -171,6 +187,7 @@ export default function App() {
             {tab === 'crashes' && <CrashDashboard/>}
             {tab === 'health' && <HealthMonitor/>}
             {tab === 'vibelink' && <VibeLink />}
+            {tab === 'manual' && <Manual onNavigate={setTab} />}
             {tab === 'settings' && (
               <div className="space-y-6">
                 <Settings />

@@ -163,21 +163,21 @@ export function HealthMonitor() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">
-            <Activity className="h-5 w-5 text-orange-600"/>
+          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-100">
+            <Activity className="h-5 w-5 text-ghost-orange"/>
             Diagnostic System Health
           </h2>
-          <p className="text-xs text-slate-500 mt-1 font-medium">
+          <p className="text-xs text-slate-400 mt-1 font-medium">
             Monitor primary watchdog telemetry processors, snapshot cache drivers, and ledger databases.
           </p>
         </div>
 
         {/* Tab selection */}
-        <div className="flex items-center gap-1.5 bg-slate-200/60 p-1 rounded-lg self-start">
+        <div className="flex items-center gap-1.5 bg-black/30 border border-slate-800 p-1 rounded-lg self-start">
           <button
             onClick={() => setActiveTab('components')}
             className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors cursor-pointer ${
-              activeTab === 'components' ? 'bg-white text-slate-800 shadow-3xs' : 'text-slate-500 hover:text-slate-900'
+              activeTab === 'components' ? 'bg-ghost-orange text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
             Processor Status
@@ -185,10 +185,10 @@ export function HealthMonitor() {
           <button
             onClick={() => setActiveTab('terminal')}
             className={`px-3 py-1.5 text-xs font-bold rounded-md transition-colors cursor-pointer flex items-center gap-1 ${
-              activeTab === 'terminal' ? 'bg-white text-slate-800 shadow-3xs' : 'text-slate-500 hover:text-slate-900'
+              activeTab === 'terminal' ? 'bg-ghost-orange text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Database className="h-3.5 w-3.5 text-orange-600" />
+            <Database className="h-3.5 w-3.5" />
             SQLite DB Ledger ({storedSnapshots.length + mutations.length + dbLogs.length} rows)
           </button>
         </div>
@@ -206,7 +206,7 @@ export function HealthMonitor() {
             Updated {formatDistanceToNow(new Date(health.timestamp * 1000), { addSuffix: true })} · System Engine: Tauri VibeBridge
           </div>
         </div>
-        <div className="text-xs text-slate-650 font-mono bg-white/70 border border-slate-200/80 px-2.5 py-1.5 rounded-lg font-bold">
+        <div className="text-xs text-ghost-orange font-mono bg-black/30 border border-slate-800 px-3 py-2 rounded-lg font-bold">
           Queries: {queryCount}
         </div>
       </div>
@@ -229,67 +229,67 @@ export function HealthMonitor() {
               }
 
               return (
-                <div key={name} className="rounded-xl border border-slate-200 bg-white p-4.5 space-y-2 shadow-3xs hover:bg-slate-50/40 transition-colors">
+                <div key={name} className="rounded-xl border border-slate-800/80 bg-ghost-surface p-4.5 space-y-2 shadow-xs hover:border-slate-700 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {icons[statusText as keyof typeof icons] ?? icons.UNKNOWN}
-                      <span className="font-bold text-xs text-slate-800 capitalize tracking-wide leading-snug">{name.replace(/_/g, ' ')}</span>
+                      <span className="font-bold text-xs text-slate-200 capitalize tracking-wide leading-snug">{name.replace(/_/g, ' ')}</span>
                     </div>
                     {(comp.fallback || (name === 'database' && isDbLocked)) && (
-                      <span className="text-[9px] bg-orange-50 border border-orange-200 text-orange-850 px-2 py-0.5 rounded-full font-sans font-bold">
+                      <span className="text-[9px] bg-ghost-orange/15 border border-ghost-orange/30 text-ghost-orange px-2 py-0.5 rounded-full font-sans font-bold">
                         WAL Fallback
                       </span>
                     )}
                   </div>
-                  <p className="text-[11.5px] text-slate-500 font-medium leading-relaxed font-sans">{msgText}</p>
+                  <p className="text-[11.5px] text-slate-400 font-medium leading-relaxed font-sans">{msgText}</p>
                 </div>
               );
             })}
           </div>
 
           {/* Database Control Simulation deck */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4 shadow-2xs">
-            <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-              <Database className="h-5 w-5 text-orange-600" />
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+          <div className="rounded-xl border border-slate-800 bg-ghost-surface p-5 space-y-4 shadow-sm">
+            <div className="flex items-center gap-2 pb-2 border-b border-slate-800">
+              <Database className="h-5 w-5 text-ghost-orange animate-pulse" />
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                 Interactive Database Integrity Control Deck
               </h3>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed font-semibold">
+            <p className="text-xs text-slate-450 leading-relaxed font-semibold">
               Force simulation faults below to verify how Ghost's defensive architectures guard transaction pipelines when writing snapshots locally.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
               <button
                 onClick={handleToggleDbLock}
-                className={`px-3 py-2.5 border text-xs font-bold rounded-lg transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-1 shadow-3xs ${
+                className={`px-3 py-3 border text-xs font-bold rounded-lg transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-1 shadow-xs ${
                   isDbLocked 
-                    ? 'bg-amber-50 border-amber-300 text-amber-900 hover:bg-amber-100/80 animate-pulse' 
-                    : 'bg-slate-50 hover:bg-slate-100/80 border-slate-200 text-slate-800'
+                    ? 'bg-amber-950/20 border-amber-500/50 text-ghost-yellow hover:bg-amber-950/45 animate-pulse' 
+                    : 'bg-black/20 hover:bg-black/35 border-slate-800 text-slate-200'
                 }`}
               >
-                <ShieldAlert className={`h-4 w-4 ${isDbLocked ? 'text-amber-600' : 'text-slate-500'}`} />
+                <ShieldAlert className={`h-4 w-4 ${isDbLocked ? 'text-ghost-yellow' : 'text-slate-500'}`} />
                 <span>{isDbLocked ? 'Release SQLite WAL Lock' : 'Simulate WAL Mutex Lock'}</span>
               </button>
 
               <button
                 onClick={handleToggleDbCorrupted}
-                className={`px-3 py-2.5 border text-xs font-bold rounded-lg transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-1 shadow-3xs ${
+                className={`px-3 py-3 border text-xs font-bold rounded-lg transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-1 shadow-xs ${
                   isDbCorrupted 
-                    ? 'bg-red-50 border-red-300 text-red-900 hover:bg-red-100/80 animate-pulse' 
-                    : 'bg-slate-50 hover:bg-slate-100/80 border-slate-200 text-slate-800'
+                    ? 'bg-red-950/20 border-red-500/50 text-ghost-red hover:bg-red-950/45 animate-pulse' 
+                    : 'bg-black/20 hover:bg-black/35 border-slate-800 text-slate-200'
                 }`}
               >
-                <ServerCrash className={`h-4 w-4 ${isDbCorrupted ? 'text-red-600' : 'text-slate-500'}`} />
+                <ServerCrash className={`h-4 w-4 ${isDbCorrupted ? 'text-ghost-red' : 'text-slate-500'}`} />
                 <span>{isDbCorrupted ? 'Recover DB Connection' : 'Simulate Corrupt Database'}</span>
               </button>
 
               <button
                 onClick={handleSeedRecord}
-                className="px-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 border border-slate-200 text-slate-800 text-xs font-bold rounded-lg transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-1 shadow-3xs"
+                className="px-3 py-3 bg-black/20 hover:bg-black/35 border border-slate-800 text-slate-200 text-xs font-bold rounded-lg transition-all cursor-pointer flex flex-col items-center justify-center text-center gap-1 shadow-xs"
               >
-                <Plus className="h-4 w-4 text-emerald-600" />
+                <Plus className="h-4 w-4 text-ghost-green animate-bounce" />
                 <span>Seed Mutation Log Trace</span>
               </button>
             </div>
@@ -314,9 +314,9 @@ export function HealthMonitor() {
           </div>
         </div>
       ) : (
-        <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-2xs">
+        <div className="space-y-4 rounded-xl border border-slate-800 bg-ghost-surface p-5 shadow-sm">
           {/* Table select tabs */}
-          <div className="flex flex-wrap border-b border-slate-200 gap-1.5 pb-0.5">
+          <div className="flex flex-wrap border-b border-slate-800 gap-1.5 pb-0.5">
             {[
               { id: 'file_mutations', label: 'file_mutations', count: mutations.length },
               { id: 'runtime_crashes', label: 'runtime_crashes', count: storedCrash ? 1 : 0 },
@@ -329,8 +329,8 @@ export function HealthMonitor() {
                 onClick={() => setSelectedTable(tab.id as any)}
                 className={`px-3 py-1.5 text-xs font-bold rounded-t-lg border-t border-x transition-all cursor-pointer ${
                   selectedTable === tab.id
-                    ? 'bg-slate-900 text-slate-100 border-slate-900'
-                    : 'bg-slate-50 hover:bg-slate-100 text-slate-500 border-transparent'
+                    ? 'bg-ghost-orange text-white border-ghost-orange/20'
+                    : 'bg-black/20 hover:bg-[#1E2442] hover:text-slate-200 text-slate-400 border-transparent'
                 }`}
               >
                 {tab.label} <span className="text-[10px] opacity-75 font-mono">({tab.count})</span>
