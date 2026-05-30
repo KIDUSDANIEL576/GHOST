@@ -9,6 +9,7 @@ import {
 import { toast } from 'sonner';
 import { WebVibeTool } from '../lib/vibeActiveRegistry';
 import { useWebVibeRegistry } from '../hooks/useWebVibeRegistry';
+import JSZip from 'jszip';
 
 interface VibeAgent {
   id: string;
@@ -54,6 +55,162 @@ export function VibeLink() {
   const [vibeActive, setVibeActive] = useState(true);
   const [selectedExtFile, setSelectedExtFile] = useState<'manifest' | 'content' | 'background'>('manifest');
   const [isExtensionSimActive, setIsExtensionSimActive] = useState(true);
+  const [compilingExt, setCompilingExt] = useState(false);
+
+  const manifestContent = `{
+  "manifest_version": 3,
+  "name": "Ghost Vibe Watch - Browser Sandbox Monitor",
+  "version": "1.0.0",
+  "description": "Monitors and streams tab updates, referrers, and AI generation frames back to the local Ghost micro-daemon.",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "webNavigation",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost/*",
+    "https://*.studio.google/*",
+    "https://*.bolt.new/*",
+    "https://*.lovable.dev/*",
+    "https://*.v0.dev/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}`;
+
+  const contentScriptContent = `// INJECTED TO DETECT AND BROADCAST MUTATIONS ACCORDING TO LIVE CHANNELS
+console.log("[Ghost System] Tab activity listener mounted successfully.");
+
+// Track direct changes in the page DOM structure (used by Vibe editors to represent state)
+const observer = new MutationObserver((mutations) => {
+  let mutationsCount = mutations.length;
+  if (mutationsCount > 15) {
+    chrome.runtime.sendMessage({
+      type: "VIBE_STORM_DETECTED",
+      url: window.location.href,
+      referrer: document.referrer,
+      title: document.title,
+      mutationCount: mutationsCount
+    });
+  }
+});
+
+observer.observe(document.documentElement, {
+  childList: true,
+  subtree: true,
+  attributes: true
+});
+
+// Intercept specific custom window events posted by Lovable or Bolt
+window.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "AI_COMPILE_ERROR") {
+    chrome.runtime.sendMessage({
+      type: "BROWSER_COMPILATION_CRASH",
+      error: event.data.message,
+      stack: event.data.stack
+    });
+  }
+});`;
+
+  const backgroundContent = `// MAINTAIN WEBSOCKET PIPES IN BACKGROUND TO LOCALHOST MICRO-DAEMON
+let socket = null;
+
+function connectToGhost() {
+  socket = new WebSocket("ws://localhost:${websocketPort}");
+  
+  socket.onopen = () => {
+    console.log("[Extension Background] Hooked up to local Ghost daemon.");
+  };
+  
+  socket.onclose = () => {
+    // Retry periodically if local service drops
+    setTimeout(connectToGhost, 5000);
+  };
+}
+
+connectToGhost();
+
+// Listen to messages from content scripts and forward them over local web socket
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      timestamp: Date.now(),
+      tabId: sender.tab?.id,
+      url: sender.tab?.url,
+      title: sender.tab?.title,
+      data: message
+    }));
+  }
+});
+
+// Watch active browser channel switches
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  chrome.tabs.get(activeInfo.tabId, (tab) => {
+    if (tab && tab.url && socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: "TAB_SWITCHED",
+        url: tab.url,
+        title: tab.title
+      }));
+    }
+  });
+});`;
+
+  const readmeContent = `# Ghost Vibe Watch - Browser Sandbox Monitor Extension
+
+This is the compiled browser extension for Ghost Universal. It monitors active browser development environments and streams mutation signals back to the local Ghost micro-daemon over WebSockets.
+
+## How to Install (Chrome / Chromium Browsers)
+
+1. **Extract the ZIP file**: Unzip the downloaded \`ghost_vibe_watch_extension.zip\` into a folder on your computer.
+2. **Access Extensions Page**: Open Google Chrome and go to: \`chrome://extensions/\`
+3. **Toggle Developer Mode**: In the top-right corner of the Extensions page, switch the **Developer mode** toggle to **ON**.
+4. **Load Unpacked**: Click the **Load unpacked** button in the top-left corner.
+5. **Select Extension Folder**: Choose the extracted folder (which contains \`manifest.json\`, \`content.js\`, and \`background.js\`).
+6. **Done!**: The extension is now active and will sync automatically when you run local dev previews!`;
+
+  const handleDownloadExtensionZip = async () => {
+    setCompilingExt(true);
+    const toastId = toast.loading('Compiling and packaging extension assets...');
+    try {
+      const zip = new JSZip();
+      zip.file('manifest.json', manifestContent);
+      zip.file('content.js', contentScriptContent);
+      zip.file('background.js', backgroundContent);
+      zip.file('README.md', readmeContent);
+
+      const blobContent = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(blobContent);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ghost_vibe_watch_extension.zip';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success('🎉 Extension compiled and packaged successfully!', {
+        id: toastId,
+        description: 'Unpack the ZIP and load it in Chrome Extensions with Developer Mode enabled.'
+      });
+    } catch (err: any) {
+      console.error('Failed to compile extension ZIP:', err);
+      toast.error('Failed to compile extension: ' + err.message, { id: toastId });
+    } finally {
+      setCompilingExt(false);
+    }
+  };
 
   // Hook-driven VibeActiveRegistry Monitor
   const {
@@ -429,7 +586,18 @@ export function VibeLink() {
             </p>
           </div>
           
-          <div className="border-t border-slate-800/85 pt-3.5 mt-4">
+          <div className="border-t border-slate-800/85 pt-3.5 mt-4 flex flex-col gap-2.5">
+            <button 
+              onClick={handleDownloadExtensionZip}
+              disabled={compilingExt}
+              className="flex items-center justify-between text-[11px] text-slate-400 hover:text-ghost-orange font-semibold font-sans cursor-pointer transition-all outline-hidden w-full text-left disabled:opacity-50"
+            >
+              <span>Download Extension Source (ZIP)</span>
+              <span className="text-[10px] text-ghost-orange font-bold flex items-center gap-1">
+                <Download className="h-3 w-3" />
+                Download →
+              </span>
+            </button>
             <a 
               href="https://github.com" 
               target="_blank" 
@@ -612,10 +780,10 @@ export function VibeLink() {
 
       {/* CHROME EXTENSION DECK - PRODUCING REAL-TIME READERS FOR ALL BROWSER ACTIVITY */}
       <div className="rounded-xl border border-slate-800 bg-[#131936] p-5 space-y-5 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800/85">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 pb-2 border-b border-slate-800/85">
           <div>
             <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-              <Chrome className="h-4 w-4 text-ghost-orange animate-spin-slow" />
+              <Chrome className="h-4 w-4 text-ghost-orange " />
               Chrome Extension Finalize Blueprint (v1.0.0-Beta Code)
             </h3>
             <p className="text-xs text-slate-400 font-medium mt-1 font-sans">
@@ -623,23 +791,35 @@ export function VibeLink() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-slate-400 font-bold font-sans">Simulator Feed:</span>
+          <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
-              onClick={() => {
-                setIsExtensionSimActive(!isExtensionSimActive);
-                toast.success(isExtensionSimActive ? "Simulated extension paused" : "Simulated extension streaming active!");
-              }}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
-                isExtensionSimActive
-                  ? 'bg-ghost-orange/15 text-ghost-orange border border-ghost-orange/30'
-                  : 'bg-[#1E2551] text-slate-400 border border-slate-700/80 hover:bg-[#252E5E]'
-              }`}
+              onClick={handleDownloadExtensionZip}
+              disabled={compilingExt}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-orange-500 to-yellow-500 hover:brightness-115 active:scale-95 text-white rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-50"
             >
-              <Eye className="h-3 w-3" />
-              {isExtensionSimActive ? 'ACTIVE SIM' : 'MUTED SIM'}
+              <Download className="h-4 w-4" />
+              Download Compiled Extension
             </button>
+
+            <div className="flex items-center gap-2 sm:border-l sm:border-slate-800 sm:pl-3">
+              <span className="text-[10px] text-slate-400 font-bold font-sans">Simulator Feed:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsExtensionSimActive(!isExtensionSimActive);
+                  toast.success(isExtensionSimActive ? "Simulated extension paused" : "Simulated extension streaming active!");
+                }}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-bold transition-all cursor-pointer ${
+                  isExtensionSimActive
+                    ? 'bg-ghost-orange/15 text-ghost-orange border border-ghost-orange/30'
+                    : 'bg-[#1E2551] text-slate-400 border border-slate-700/80 hover:bg-[#252E5E]'
+                }`}
+              >
+                <Eye className="h-3 w-3" />
+                {isExtensionSimActive ? 'ACTIVE SIM' : 'MUTED SIM'}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -689,9 +869,20 @@ export function VibeLink() {
 
         {/* Code Content Window */}
         <div className="rounded-xl border border-slate-850 bg-slate-950 overflow-hidden font-mono text-[10.5px]">
-          <div className="bg-slate-900 px-4 py-1.5 flex items-center justify-between border-b border-slate-800 text-slate-400 text-[10px] font-bold">
+          <div className="bg-slate-900 px-4 py-2 flex items-center justify-between border-b border-slate-800 text-slate-400 text-[10px] font-bold">
             <span>extension_src/{selectedExtFile === 'manifest' ? 'manifest.json' : selectedExtFile === 'content' ? 'content.js' : 'background.js'}</span>
-            <span className="text-[9px] uppercase tracking-wider text-orange-500 bg-orange-950/40 border border-orange-900/60 px-1.5 py-0.5 rounded font-black">PROPOSAL BLUEPRINT</span>
+            <div className="flex items-center gap-3">
+              <button 
+                type="button"
+                onClick={handleDownloadExtensionZip}
+                disabled={compilingExt}
+                className="text-[10px] text-ghost-orange hover:text-white hover:bg-orange-500/10 border border-ghost-orange/35 px-2 py-1 rounded flex items-center gap-1 transition-all cursor-pointer disabled:opacity-50 font-bold"
+              >
+                <Download className="h-3 w-3" />
+                Package & Download ZIP
+              </button>
+              <span className="text-[9px] uppercase tracking-wider text-orange-500 bg-orange-950/40 border border-orange-900/60 px-1.5 py-0.5 rounded font-black">PROPOSAL BLUEPRINT</span>
+            </div>
           </div>
           <pre className="p-4 overflow-x-auto max-h-72 select-all text-slate-200 leading-relaxed whitespace-pre font-mono">
             {selectedExtFile === 'manifest' && `{

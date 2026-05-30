@@ -159,16 +159,16 @@ export function Settings() {
       <h2 className="text-xl font-bold">Settings</h2>
 
       {/* Appearance & Theme Toggle */}
-      <div className="rounded-xl border border-slate-800 bg-ghost-surface p-5">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-4">Appearance</h3>
+      <div className="rounded-xl border border-white/5 bg-white/3 p-5">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Appearance</h3>
         <Row label="Interface Theme" desc="Choose between Eye-Safe Cosmic Dark or High-Contrast Light Mode">
-          <div className="flex bg-black/25 p-1.5 rounded-lg border border-slate-800 gap-1.5">
+          <div className="flex bg-black/20 p-1.5 rounded-lg border border-white/10 gap-1.5">
             <button
               onClick={() => set('theme', 'dark')}
               className={`px-3 py-1.5 text-xs rounded-md transition-all cursor-pointer font-bold ${
                 s.theme === 'dark'
-                  ? 'bg-ghost-orange text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-orange-500 text-white shadow-sm'
+                  : 'text-gray-400 hover:text-white'
               }`}
             >
               Dark Mode
@@ -177,8 +177,8 @@ export function Settings() {
               onClick={() => set('theme', 'light')}
               className={`px-3 py-1.5 text-xs rounded-md transition-all cursor-pointer font-bold ${
                 s.theme === 'light'
-                  ? 'bg-ghost-orange text-white shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-slate-900 shadow-sm border border-slate-200'
+                  : 'text-gray-400 hover:text-gray-200'
               }`}
             >
               Light Mode
@@ -188,15 +188,15 @@ export function Settings() {
       </div>
 
       {/* Snapshots */}
-      <div className="rounded-xl border border-slate-800 bg-ghost-surface p-5">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-4">Snapshots</h3>
+      <div className="rounded-xl border border-white/5 bg-white/3 p-5">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Snapshots</h3>
         <Row label="Auto Snapshots" desc="Save project state automatically in background">
           <Toggle on={s.autoSnapshot} onChange={v => set('autoSnapshot', v)}/>
         </Row>
         {s.autoSnapshot && (
           <Row label="Interval" desc="How often to auto-save (seconds)">
             <input type="number" min={30} max={3600} step={30} value={s.intervalSec} onChange={e => set('intervalSec', parseInt(e.target.value) || 300)}
-              className="w-20 text-center text-sm bg-black/20 border border-slate-800 rounded-lg px-2 py-1.5 outline-none focus:border-ghost-orange text-white font-sans"/>
+              className="w-20 text-center text-sm bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 outline-none focus:border-orange-500 text-white font-sans"/>
           </Row>
         )}
         <Row label="Auto Restore on Crash" desc="Automatically revert when crash detected" proOnly>
@@ -208,8 +208,8 @@ export function Settings() {
       </div>
 
       {/* Notifications */}
-      <div className="rounded-xl border border-slate-800 bg-ghost-surface p-5 space-y-4">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Notifications</h3>
+      <div className="rounded-xl border border-white/5 bg-white/3 p-5 space-y-4">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Notifications</h3>
         
         <Row label="Browser Notifications" desc="Alert you via web notifications when high-severity crashes are discovered">
           <Toggle on={s.enableBrowserNotifications} onChange={v => set('enableBrowserNotifications', v)}/>
@@ -217,11 +217,11 @@ export function Settings() {
         
         {s.enableBrowserNotifications && (
           <div className="space-y-4 pt-2">
-            <div className="py-3 border-b border-slate-850">
+            <div className="py-3 border-b border-white/5">
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium">Browser Permission</p>
-                  <p className="text-xs text-slate-400 mt-0.5">Required to trigger system-level desktop alerts</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Required to trigger system-level desktop alerts</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-sans font-semibold border ${
@@ -234,7 +234,7 @@ export function Settings() {
                     {permission === 'granted' ? 'GRANTED' : permission === 'denied' ? 'DENIED' : 'PENDING'}
                   </span>
                   {permission !== 'granted' && (
-                    <button onClick={requestPermission} className="text-xs px-2.5 py-1.5 bg-black/20 hover:bg-black/35 border border-slate-800 rounded-lg transition-colors cursor-pointer font-bold text-slate-200">
+                    <button onClick={requestPermission} className="text-xs px-2.5 py-1 bg-white/10 hover:bg-white/15 border border-white/10 rounded transition-colors cursor-pointer font-medium text-white">
                       Authorize
                     </button>
                   )}
@@ -245,8 +245,8 @@ export function Settings() {
             <Row label="Min severity threshold" desc="Only notify on file-mutation suspect score ≥ this percentage">
               <div className="flex items-center gap-3">
                 <input type="range" min={10} max={100} step={5} value={s.minSeverityScore} onChange={e => set('minSeverityScore', parseInt(e.target.value) || 80)}
-                  className="w-28 sm:w-36 h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-ghost-orange"/>
-                <span className="text-xs font-bold text-ghost-orange font-mono w-8 text-right">{s.minSeverityScore}%</span>
+                  className="w-28 sm:w-36 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-orange-500"/>
+                <span className="text-xs font-bold text-orange-400 font-mono w-8 text-right">{s.minSeverityScore}%</span>
               </div>
             </Row>
 
@@ -255,7 +255,7 @@ export function Settings() {
             </Row>
 
             <div className="pt-2 flex justify-end">
-              <button onClick={triggerTestNotification} className="text-xs px-3.5 py-2 bg-ghost-orange/15 hover:bg-ghost-orange/20 border border-ghost-orange/20 text-ghost-orange rounded-lg transition-colors cursor-pointer font-bold">
+              <button onClick={triggerTestNotification} className="text-xs px-3 py-1.5 bg-orange-500/10 hover:bg-orange-500/20 border border-orange-500/20 text-orange-400 rounded-lg transition-colors cursor-pointer font-medium">
                 ⚡ Fire Test Notification
               </button>
             </div>
@@ -264,22 +264,22 @@ export function Settings() {
       </div>
 
       {/* Ignore patterns */}
-      <div className="rounded-xl border border-slate-800 bg-ghost-surface p-5">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Ignored Paths</h3>
+      <div className="rounded-xl border border-white/5 bg-white/3 p-5">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Ignored Paths</h3>
         <textarea value={s.ignorePatterns} onChange={e => set('ignorePatterns', e.target.value)} rows={5}
-          className="w-full bg-black/25 border border-slate-800 rounded-lg p-3 text-sm font-mono text-slate-350 outline-none focus:border-ghost-orange resize-none placeholder:text-slate-650"/>
+          className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-sm font-mono text-gray-300 outline-none focus:border-orange-500 resize-none placeholder:text-gray-700"/>
       </div>
 
       {/* Account */}
-      <div className="rounded-xl border border-slate-800 bg-ghost-surface p-5">
-        <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-4">Account</h3>
+      <div className="rounded-xl border border-white/5 bg-white/3 p-5">
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-4">Account</h3>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Shield className={`h-6 w-6 ${pro ? 'text-ghost-orange' : 'text-slate-500'}`}/>
+            <Shield className={`h-6 w-6 ${pro ? 'text-orange-500' : 'text-gray-600'}`}/>
             <div>
               <p className="text-sm font-semibold">{pro ? '👻 Ghost Pro' : 'Free Tier'}</p>
               {/* ✅ Expert-corrected copy — privacy first */}
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-gray-500">
                 {pro
                   ? 'Unlimited history · Still 100% local'
                   : 'Local only · Your code never leaves your machine'}
@@ -289,15 +289,15 @@ export function Settings() {
           <div className="flex items-center gap-2">
             {!pro ? (
               <>
-                <button onClick={openCheckout} className="flex items-center gap-1.5 text-xs px-3.5 py-2 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-lg font-bold hover:opacity-90 transition-opacity cursor-pointer text-white">
+                <button onClick={openCheckout} className="flex items-center gap-1.5 text-xs px-3 py-1.5 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-lg font-semibold hover:opacity-90 transition-opacity cursor-pointer text-white">
                   Upgrade $19/mo <ExternalLink className="h-3 w-3"/>
                 </button>
-                <button onClick={handleDevUpgrade} className="text-[10px] text-slate-500 hover:text-slate-300 px-2 py-1.5 border border-slate-800/60 bg-black/20 rounded-lg cursor-pointer font-medium">
+                <button onClick={handleDevUpgrade} className="text-[10px] text-gray-500 hover:text-gray-300 px-2 py-1 border border-white/5 bg-white/5 rounded cursor-pointer">
                   Simulate Pro
                 </button>
               </>
             ) : (
-              <button onClick={handleDevDowngrade} className="text-xs font-bold text-red-400 hover:text-red-350 px-3 py-1.5 bg-red-950/20 border border-red-950/40 rounded-lg cursor-pointer">
+              <button onClick={handleDevDowngrade} className="text-xs text-red-400 hover:text-red-300 px-2 py-1 bg-red-950/20 border border-red-900/30 rounded cursor-pointer">
                 Cancel Sub (Simulator)
               </button>
             )}
