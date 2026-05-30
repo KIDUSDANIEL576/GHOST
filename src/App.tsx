@@ -23,9 +23,22 @@ export default function App() {
 
   useEffect(() => {
     // Check if a crash is currently active in localStorage
-    const raw = localStorage.getItem('ghost_active_crash');
-    setSimulateActive(!!raw && raw !== 'null');
-  }, [tab]);
+    const checkActive = () => {
+      const raw = localStorage.getItem('ghost_active_crash');
+      setSimulateActive(!!raw && raw !== 'null');
+    };
+    checkActive();
+
+    window.addEventListener('storage', checkActive);
+    window.addEventListener('ghost_crash_cleared', checkActive);
+    window.addEventListener('ghost_snapshots_updated', checkActive);
+
+    return () => {
+      window.removeEventListener('storage', checkActive);
+      window.removeEventListener('ghost_crash_cleared', checkActive);
+      window.removeEventListener('ghost_snapshots_updated', checkActive);
+    };
+  }, []);
 
   const dot = { 
     HEALTHY: 'bg-green-400', 

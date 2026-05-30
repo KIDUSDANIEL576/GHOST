@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Cpu, Link2, Network, ShieldCheck, RefreshCw, Zap, Play, Terminal, 
   Settings, Save, AlertCircle, Sparkles, CheckCircle2, Wifi, WifiOff, 
-  FileCode2, Download, Search, Plus, Radio, ExternalLink
+  FileCode2, Download, Search, Plus, Radio, ExternalLink,
+  Chrome, Code, Eye, Monitor
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { WebVibeTool } from '../lib/vibeActiveRegistry';
+import { useWebVibeRegistry } from '../hooks/useWebVibeRegistry';
 
 interface VibeAgent {
   id: string;
@@ -24,16 +27,6 @@ interface ActivityLog {
   type: 'info' | 'success' | 'warning' | 'error' | 'mutation';
 }
 
-interface WebVibeTool {
-  id: string;
-  name: string;
-  domain: string;
-  detectable: boolean;
-  status: 'active' | 'sleeping' | 'stopped';
-  type: 'workspace' | 'generation' | 'sandbox';
-  integrationKey: string;
-}
-
 const generateUniqueId = (prefix = 'id') => `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
 export function VibeLink() {
@@ -44,17 +37,8 @@ export function VibeLink() {
     { id: '4', name: 'Aistudio Build CLI', type: 'cli', status: 'writing', lastActivity: '0 seconds ago', mutationsCount: 23 },
   ]);
 
-  const [discoveredTools, setDiscoveredTools] = useState<WebVibeTool[]>([
-    { id: 'w1', name: 'Google AI Studio Build', domain: 'ai.studio/build', detectable: true, status: 'active', type: 'workspace', integrationKey: 'AIS-GHOST-V7' },
-    { id: 'w2', name: 'Bolt.new Sandbox Frame', domain: 'bolt.new', detectable: true, status: 'stopped', type: 'sandbox', integrationKey: 'BOLT-9003' },
-    { id: 'w3', name: 'Lovable App Container', domain: 'lovable.dev', detectable: true, status: 'stopped', type: 'sandbox', integrationKey: 'LOV-SYNC-SECURE' },
-    { id: 'w4', name: 'v0.dev UI Engine', domain: 'v0.dev', detectable: true, status: 'stopped', type: 'generation', integrationKey: 'V0-MOCK-IPC' },
-    { id: 'w5', name: 'Replit Agent Shell', domain: 'replit.com', detectable: true, status: 'stopped', type: 'workspace', integrationKey: 'REP-WORK-LINK' }
-  ]);
-
   const [newToolName, setNewToolName] = useState('');
   const [newToolDomain, setNewToolDomain] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
 
   const [logs, setLogs] = useState<ActivityLog[]>([
     { id: '1', timestamp: '12:04:15 PM', source: 'Ghost Chrome Extension', message: 'Established active sandbox debugger channel.', type: 'success' },
@@ -68,122 +52,36 @@ export function VibeLink() {
   const [autoHeal, setAutoHeal] = useState(true);
   const [isSimulatingAgent, setIsSimulatingAgent] = useState(false);
   const [vibeActive, setVibeActive] = useState(true);
+  const [selectedExtFile, setSelectedExtFile] = useState<'manifest' | 'content' | 'background'>('manifest');
+  const [isExtensionSimActive, setIsExtensionSimActive] = useState(true);
 
-  // --- Real-Time Sandbox Active Check Probers ---
-  const probeTool = async (tool: WebVibeTool): Promise<'active' | 'stopped' | 'sleeping'> => {
-    const domain = tool.domain.toLowerCase().trim();
-    
-    // Check if it's localhost or an IP (like 127.0.0.1) or custom port (e.g. localhost:5173, localhost:3000)
-    const isLocal = domain.includes('localhost') || domain.includes('127.0.0.1') || /:\d+/.test(domain);
+  // Hook-driven VibeActiveRegistry Monitor
+  const {
+    discoveredTools,
+    isScanning,
+    runActiveScan,
+    updateToolStatus,
+    registerNewTool,
+    removeTool
+  } = useWebVibeRegistry(vibeActive, 10000);
 
-    if (isLocal) {
-      let url = domain;
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'http://' + url;
-      }
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 1000);
-        
-        // Fetch to see if the port / local service is actively listening
-        await fetch(url, { 
-          mode: 'no-cors', 
-          cache: 'no-store',
-          signal: controller.signal 
-        });
-        clearTimeout(timeoutId);
-        return 'active';
-      } catch (err) {
-        return 'stopped';
-      }
-    }
-
-    // Context Aware Checks based on document context & live embed environment
-    const referrer = document.referrer?.toLowerCase() || '';
-    const currentHref = window.location.href.toLowerCase();
-
-    if (domain.includes('ai.studio') || domain.includes('google')) {
-      // Checked if we're in AI Studio Frame
-      const isAIStudio = referrer.includes('ai.studio') || referrer.includes('google') || currentHref.includes('google') || currentHref.includes('ai-studio') || currentHref.includes('studio');
-      return isAIStudio ? 'active' : 'stopped';
-    }
-
-    if (domain.includes('lovable') || domain.includes('lovable.dev')) {
-      // Checked if referred/served by lovable
-      const isLovable = referrer.includes('lovable') || referrer.includes('gptengineer') || currentHref.includes('lovable') || currentHref.includes('gpt-engineer');
-      return isLovable ? 'active' : 'stopped';
-    }
-
-    if (domain.includes('bolt.new') || domain.includes('bolt')) {
-      const isBolt = referrer.includes('bolt.new') || referrer.includes('stackblitz') || currentHref.includes('bolt');
-      return isBolt ? 'active' : 'stopped';
-    }
-
-    if (domain.includes('v0.dev') || domain.includes('v5')) {
-      const isV5 = referrer.includes('v0.dev') || currentHref.includes('v0');
-      return isV5 ? 'active' : 'stopped';
-    }
-
-    if (domain.includes('replit')) {
-      const isReplit = referrer.includes('replit') || currentHref.includes('replit');
-      return isReplit ? 'active' : 'stopped';
-    }
-
-    return 'stopped';
-  };
-
-  const runRealTimeScan = async (showToast = false) => {
-    setIsScanning(true);
-    if (showToast) {
-      toast.loading('Running real-time network probes on registered ports & workspace endpoints...', { id: 'vibe-scan' });
-    }
-
-    try {
-      const updatedTools = await Promise.all(
-        discoveredTools.map(async (t) => {
-          const status = await probeTool(t);
-          return { ...t, status };
-        })
-      );
-
-      setDiscoveredTools(updatedTools);
-      const activeCount = updatedTools.filter(t => t.status === 'active').length;
-
-      setLogs(prev => [
-        {
-          id: generateUniqueId('scan'),
-          timestamp: new Date().toLocaleTimeString(),
-          source: 'Browser Watcher',
-          message: `🔍 Completed proactive tab verification scan. Checked ${updatedTools.length} channels, found ${activeCount} active development frame(s).`,
-          type: 'success'
-        },
-        ...prev
-      ]);
-
-      if (showToast) {
-        toast.success(`Scan completed! Found ${activeCount} active workspace channels.`, { id: 'vibe-scan' });
-      }
-    } catch (e: any) {
-      if (showToast) {
-        toast.error('Scan failed: ' + e.message, { id: 'vibe-scan' });
-      }
-    } finally {
-      setIsScanning(false);
-    }
-  };
-
-  // Periodic active environment watcher
+  // Hook-driven periodic telemetry sync to user activity feed
   useEffect(() => {
-    runRealTimeScan(false);
+    // Log initial platform scan
+    const activeCount = discoveredTools.filter((t: WebVibeTool) => t.status === 'active').length;
+    setLogs(prev => [
+      {
+        id: generateUniqueId('scan_init'),
+        timestamp: new Date().toLocaleTimeString(),
+        source: 'Browser Watcher',
+        message: `🔍 Active Registry linked. Tracked ${discoveredTools.length} channels, found ${activeCount} active workspace frame(s).`,
+        type: 'success'
+      },
+      ...prev
+    ].slice(0, 30));
+  }, []);
 
-    const scanInterval = setInterval(() => {
-      if (vibeActive && !isScanning) {
-        runRealTimeScan(false);
-      }
-    }, 10000);
 
-    return () => clearInterval(scanInterval);
-  }, [vibeActive]);
 
   // Periodic simulation of extension active traffic
   useEffect(() => {
@@ -203,6 +101,38 @@ export function VibeLink() {
 
     return () => clearInterval(interval);
   }, [vibeActive, isSimulatingAgent]);
+
+  // Periodic Simulation of real browser extension events reading tab activity
+  useEffect(() => {
+    if (!vibeActive || !isExtensionSimActive) return;
+
+    const extMessages = [
+      'Detected DOM mutation wave of +114 nodes inside editor previews.',
+      'Active tab URL checked: matched workspace filters (http://localhost:3000).',
+      'Port Handshake: WebSocket connection alive and streaming frames at 25Hz.',
+      'Intercepted compiler state trigger. App preview synchronizing cleanly.',
+      'Tab switched event registered: active workspace is ai.studio/build/a5790e.',
+      'Monitoring iframe context: successfully mounted mutation observers.'
+    ];
+
+    const intvl = setInterval(() => {
+      if (Math.random() > 0.5) {
+        const msg = extMessages[Math.floor(Math.random() * extMessages.length)];
+        setLogs(prev => [
+          {
+            id: generateUniqueId('ext_sim'),
+            timestamp: new Date().toLocaleTimeString(),
+            source: 'Chrome Extension',
+            message: `🌐 [TAB WATCH] ${msg}`,
+            type: 'info'
+          },
+          ...prev
+        ]);
+      }
+    }, 6000);
+
+    return () => clearInterval(intvl);
+  }, [vibeActive, isExtensionSimActive]);
 
   const toggleAgent = (id: string) => {
     setAgents(prev => prev.map(a => {
@@ -357,50 +287,44 @@ export function VibeLink() {
   };
 
   // Perform a real browser tab network & port check scan
-  const handlePerformBrowserScan = () => {
-    runRealTimeScan(true);
+  // Perform a real browser tab network & port check scan
+  const handlePerformBrowserScan = async () => {
+    const updated = await runActiveScan(true);
+    if (updated) {
+      const activeCount = updated.filter(t => t.status === 'active').length;
+      setLogs(prev => [
+        {
+          id: generateUniqueId('scan'),
+          timestamp: new Date().toLocaleTimeString(),
+          source: 'Browser Watcher',
+          message: `🔍 Completed active platform registry scan. Verified ${updated.length} workspace entries, found ${activeCount} active.`,
+          type: 'success'
+        },
+        ...prev
+      ].slice(0, 30));
+    }
   };
 
   // Add custom developer workspace to screen list & probe instantly
   const handleAddWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newToolName || !newToolDomain) {
-      toast.error('Provide both name and domain descriptor.');
-      return;
+    const success = registerNewTool(newToolName, newToolDomain, 'workspace');
+    if (success) {
+      setLogs(prev => [
+        {
+          id: generateUniqueId('mount'),
+          timestamp: new Date().toLocaleTimeString(),
+          source: 'User Mounted',
+          message: `Registered custom browser environment watcher for: ${newToolDomain}`,
+          type: 'info'
+        },
+        ...prev
+      ]);
+      setNewToolName('');
+      setNewToolDomain('');
     }
-
-    const cleanDomain = newToolDomain.trim();
-    const newId = `custom_${Date.now()}`;
-    const newTool: WebVibeTool = {
-      id: newId,
-      name: newToolName,
-      domain: cleanDomain,
-      detectable: true,
-      status: 'stopped',
-      type: 'workspace',
-      integrationKey: `CUST-${Math.floor(1000 + Math.random() * 9000)}`
-    };
-
-    toast.loading(`Probing ${cleanDomain} status...`, { id: 'add-workspace' });
-    const realStatus = await probeTool(newTool);
-    newTool.status = realStatus;
-
-    setDiscoveredTools(prev => [...prev, newTool]);
-    setLogs(prev => [
-      {
-        id: generateUniqueId('mount'),
-        timestamp: new Date().toLocaleTimeString(),
-        source: 'User Mounted',
-        message: `Registered custom browser environment watcher for ${cleanDomain} (Status: ${realStatus.toUpperCase()})`,
-        type: 'info'
-      },
-      ...prev
-    ]);
-
-    setNewToolName('');
-    setNewToolDomain('');
-    toast.success(`Successfully mounted ${newToolName}! (Status: ${realStatus.toUpperCase()})`, { id: 'add-workspace' });
   };
+
 
   return (
     <div className="space-y-6">
@@ -543,32 +467,62 @@ export function VibeLink() {
 
         {/* Grid of browser components */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-          {discoveredTools.map(t => (
-            <div key={t.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-slate-50 transition-colors flex flex-col justify-between space-y-3 relative group shadow-3xs">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-bold text-xs text-slate-800 flex items-center gap-1">{t.name}</h4>
-                  <p className="text-[10px] text-slate-450 font-mono font-medium mt-0.5">{t.domain}</p>
+          {discoveredTools.map(t => {
+            const isDefault = ['w1', 'w2', 'w3', 'w4', 'w5'].includes(t.id);
+            return (
+              <div 
+                key={t.id} 
+                className="p-4 rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-slate-55 transition-all flex flex-col justify-between space-y-3 relative group shadow-3xs hover:border-orange-200 select-none cursor-pointer active:scale-[0.99]"
+                title="Click to toggle simulated status"
+                onClick={() => {
+                  const nextStatus = t.status === 'active' ? 'stopped' : 'active';
+                  updateToolStatus(t.id, nextStatus);
+                  toast.success(`Active State Updated: ${t.name} is now ${nextStatus.toUpperCase()}`);
+                }}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="min-w-0 flex-1 pr-1">
+                    <h4 className="font-bold text-xs text-slate-800 flex items-center gap-1 group-hover:text-orange-700 transition-colors truncate">{t.name}</h4>
+                    <p className="text-[10px] text-slate-450 font-mono font-medium mt-0.5 truncate">{t.domain}</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-none">
+                    <span className={`text-[9.5px] px-1.5 py-0.5 rounded font-bold font-sans transition-all ${
+                      t.status === 'active' 
+                        ? 'bg-emerald-55 border-emerald-250 text-emerald-850' 
+                        : t.status === 'sleeping' 
+                          ? 'bg-amber-55 border-amber-250 text-amber-850' 
+                          : 'bg-slate-100 text-slate-500 border border-slate-205'
+                    }`}>
+                      {t.status.toUpperCase()}
+                    </span>
+                    <span className="text-[8px] text-slate-400 group-hover:text-orange-500 transition-colors font-medium">Click to toggle</span>
+                  </div>
                 </div>
-                <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold font-sans ${
-                  t.status === 'active' 
-                    ? 'bg-emerald-50 text-emerald-805 border border-emerald-200' 
-                    : t.status === 'sleeping' 
-                      ? 'bg-amber-50 text-amber-805 border border-amber-200' 
-                      : 'bg-slate-100 text-slate-500 border border-slate-200'
-                }`}>
-                  {t.status.toUpperCase()}
-                </span>
-              </div>
 
-              <div className="flex items-center justify-between text-[10px] text-slate-450 font-medium border-t border-slate-150 pt-2.5">
-                <span className="truncate">Key: <code className="text-orange-600 font-bold font-mono text-[9px]">{t.integrationKey}</code></span>
-                <span className="flex items-center gap-1 text-[9px] text-slate-500 font-semibold font-sans">
-                  {t.detectable ? '🔓 Visible' : '🔒 Scoped'}
-                </span>
+                <div className="flex items-center justify-between text-[10px] text-slate-455 font-medium border-t border-slate-150 pt-2.5">
+                  <span className="truncate">Key: <code className="text-orange-600 font-bold font-mono text-[9px]">{t.integrationKey}</code></span>
+                  <div className="flex items-center gap-2">
+                    {!isDefault && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeTool(t.id);
+                        }}
+                        className="text-[9px] text-red-500 hover:text-red-700 font-bold border border-red-200 px-1.5 py-0.5 rounded bg-white"
+                        title="Delete custom reference watcher"
+                      >
+                        Delete
+                      </button>
+                    )}
+                    <span className="flex items-center gap-1 text-[9px] text-slate-500 font-semibold font-sans">
+                      {t.detectable ? '🔓 Visible' : '🔒 Scoped'}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+
         </div>
 
         {/* Explanation & User Guide for Custom Local Ports / Sandboxes */}
@@ -653,6 +607,200 @@ export function VibeLink() {
           >
             <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${autoHeal ? 'translate-x-4' : ''}`}/>
           </button>
+        </div>
+      </div>
+
+      {/* CHROME EXTENSION DECK - PRODUCING REAL-TIME READERS FOR ALL BROWSER ACTIVITY */}
+      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-5 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200">
+          <div>
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <Chrome className="h-4 w-4 text-orange-600 animate-spin-slow" />
+              Chrome Extension Finalize Blueprint (v1.0.0-Beta Code)
+            </h3>
+            <p className="text-xs text-slate-400 font-medium mt-1">
+              Convert Ghost into a fully integrated Chrome Extension to listen and actively monitor tab activities in background contexts.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-slate-500 font-bold">Simulator Feed:</span>
+            <button
+              type="button"
+              onClick={() => {
+                setIsExtensionSimActive(!isExtensionSimActive);
+                toast.success(isExtensionSimActive ? "Simulated extension paused" : "Simulated extension streaming active!");
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-bold transition-colors cursor-pointer ${
+                isExtensionSimActive
+                  ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                  : 'bg-slate-100 text-slate-400 border border-slate-200'
+              }`}
+            >
+              <Eye className="h-3 w-3" />
+              {isExtensionSimActive ? 'ACTIVE SIM' : 'MUTED SIM'}
+            </button>
+          </div>
+        </div>
+
+        <p className="text-xs leading-relaxed font-semibold text-slate-650">
+          To actively track <code className="bg-slate-50 border border-slate-200 px-1 py-0.5 rounded font-mono font-bold text-orange-600">bolt.new</code>, <code className="bg-slate-50 border border-slate-200 px-1 py-0.5 rounded font-mono font-bold text-orange-600">lovable.dev</code>, and other fast-paced vibe compilers, the finalize step packages Ghost into a local browser add-on. The extension utilizes the <code className="bg-slate-50 border border-slate-200 px-1 py-0.5 rounded font-mono font-bold">chrome.tabs</code> background event loops and attaches a localized <code className="bg-slate-50 border border-slate-200 px-1 py-0.5 rounded font-mono font-bold">MutationObserver</code> into development sandboxes, relaying activity over our active WebSocket stream.
+        </p>
+
+        {/* Tab Selector */}
+        <div className="flex border-b border-slate-250/60 overflow-x-auto space-x-1.5 pb-0.5">
+          <button
+            type="button"
+            onClick={() => setSelectedExtFile('manifest')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-colors cursor-pointer border-t border-x ${
+              selectedExtFile === 'manifest'
+                ? 'bg-slate-900 text-slate-100 border-slate-900'
+                : 'bg-slate-50/50 hover:bg-slate-100 text-slate-500 border-transparent'
+            }`}
+          >
+            <FileCode2 className="h-3 w-3 inline mr-1" />
+            manifest.json (Metadata & Permissions)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedExtFile('content')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-colors cursor-pointer border-t border-x ${
+              selectedExtFile === 'content'
+                ? 'bg-slate-900 text-slate-100 border-slate-900'
+                : 'bg-slate-50/50 hover:bg-slate-100 text-slate-500 border-transparent'
+            }`}
+          >
+            <Code className="h-3 w-3 inline mr-1" />
+            content-script.js (DOM Mutation Watcher)
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedExtFile('background')}
+            className={`px-3 py-1.5 text-xs font-bold rounded-t-lg transition-colors cursor-pointer border-t border-x ${
+              selectedExtFile === 'background'
+                ? 'bg-slate-900 text-slate-100 border-slate-900'
+                : 'bg-slate-50/50 hover:bg-slate-100 text-slate-500 border-transparent'
+            }`}
+          >
+            <Cpu className="h-3 w-3 inline mr-1" />
+            service-worker.js (Local WebSocket Sync Router)
+          </button>
+        </div>
+
+        {/* Code Content Window */}
+        <div className="rounded-xl border border-slate-850 bg-slate-950 overflow-hidden font-mono text-[10.5px]">
+          <div className="bg-slate-900 px-4 py-1.5 flex items-center justify-between border-b border-slate-800 text-slate-400 text-[10px] font-bold">
+            <span>extension_src/{selectedExtFile === 'manifest' ? 'manifest.json' : selectedExtFile === 'content' ? 'content.js' : 'background.js'}</span>
+            <span className="text-[9px] uppercase tracking-wider text-orange-500 bg-orange-950/40 border border-orange-900/60 px-1.5 py-0.5 rounded font-black">PROPOSAL BLUEPRINT</span>
+          </div>
+          <pre className="p-4 overflow-x-auto max-h-72 select-all text-slate-200 leading-relaxed whitespace-pre font-mono">
+            {selectedExtFile === 'manifest' && `{
+  "manifest_version": 3,
+  "name": "Ghost Vibe Watch - Browser Sandbox Monitor",
+  "version": "1.0.0",
+  "description": "Monitors and streams tab updates, referrers, and AI generation frames back to the local Ghost micro-daemon.",
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "webNavigation",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost/*",
+    "https://*.studio.google/*",
+    "https://*.bolt.new/*",
+    "https://*.lovable.dev/*",
+    "https://*.v0.dev/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}`}
+            {selectedExtFile === 'content' && `// INJECTED TO DETECT AND BROADCAST MUTATIONS ACCORDING TO LIVE CHANNELS
+console.log("[Ghost System] Tab activity listener mounted successfully.");
+
+// Track direct changes in the page DOM structure (used by Vibe editors to represent state)
+const observer = new MutationObserver((mutations) => {
+  let mutationsCount = mutations.length;
+  if (mutationsCount > 15) {
+    chrome.runtime.sendMessage({
+      type: "VIBE_STORM_DETECTED",
+      url: window.location.href,
+      referrer: document.referrer,
+      title: document.title,
+      mutationCount: mutationsCount
+    });
+  }
+});
+
+observer.observe(document.documentElement, {
+  childList: true,
+  subtree: true,
+  attributes: true
+});
+
+// Intercept specific custom window events posted by Lovable or Bolt
+window.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "AI_COMPILE_ERROR") {
+    chrome.runtime.sendMessage({
+      type: "BROWSER_COMPILATION_CRASH",
+      error: event.data.message,
+      stack: event.data.stack
+    });
+  }
+});`}
+            {selectedExtFile === 'background' && `// MAINTAIN WEBSOCKET PIPES IN BACKGROUND TO LOCALHOST MICRO-DAEMON
+let socket = null;
+
+function connectToGhost() {
+  socket = new WebSocket("ws://localhost:4321");
+  
+  socket.onopen = () => {
+    console.log("[Extension Background] Hooked up to local Ghost daemon.");
+  };
+  
+  socket.onclose = () => {
+    // Retry periodically if local service drops
+    setTimeout(connectToGhost, 5000);
+  };
+}
+
+connectToGhost();
+
+// Listen to messages from content scripts and forward them over local web socket
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({
+      timestamp: Date.now(),
+      tabId: sender.tab?.id,
+      url: sender.tab?.url,
+      title: sender.tab?.title,
+      data: message
+    }));
+  }
+});
+
+// Watch active browser channel switches
+chrome.tabs.onActivated.addListener((activeInfo) => {
+  chrome.tabs.get(activeInfo.tabId, (tab) => {
+    if (tab && tab.url && socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: "TAB_SWITCHED",
+        url: tab.url,
+        title: tab.title
+      }));
+    }
+  });
+});`}
+          </pre>
         </div>
       </div>
 

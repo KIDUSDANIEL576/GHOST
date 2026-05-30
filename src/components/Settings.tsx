@@ -64,18 +64,28 @@ export function Settings() {
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
-      setPermission(Notification.permission);
+      try {
+        setPermission(Notification.permission);
+      } catch (e) {
+        console.warn('[Settings Notification permission read blocked]:', e);
+        setPermission('denied');
+      }
     }
   }, []);
 
   const requestPermission = async () => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
-      const result = await Notification.requestPermission();
-      setPermission(result);
-      if (result === 'granted') {
-        toast.success('🎉 Desktop notifications permission granted!');
-      } else if (result === 'denied') {
-        toast.error('❌ Desktop notifications permission denied by your browser.');
+      try {
+        const result = await Notification.requestPermission();
+        setPermission(result);
+        if (result === 'granted') {
+          toast.success('🎉 Desktop notifications permission granted!');
+        } else if (result === 'denied') {
+          toast.error('❌ Desktop notifications permission denied by your browser.');
+        }
+      } catch (e: any) {
+        console.warn('Notification permission request blocked by sandbox:', e);
+        toast.error('Blocked by sandbox policy. Open the app in a new tab to authorize updates!');
       }
     } else {
       toast.error('Browser does not support desktop notifications.');
@@ -84,7 +94,12 @@ export function Settings() {
 
   const triggerTestNotification = () => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission !== 'granted') {
+      let isPermissionGranted = false;
+      try {
+        isPermissionGranted = Notification.permission === 'granted';
+      } catch (e) {}
+
+      if (!isPermissionGranted) {
         toast.error('Please request/allow permission first.');
         return;
       }
@@ -99,7 +114,8 @@ export function Settings() {
         new Notification(title, options);
         toast.success('Test notification dispatched!');
       } catch (e: any) {
-        toast.error('Failed to trigger notification: ' + e.message);
+        console.warn('Failed to trigger notification:', e);
+        toast.error('Notification blocked by sandboxed iframe. Please try in a new tab!');
       }
     } else {
       toast.error('Browser does not support desktop notifications.');

@@ -51,23 +51,30 @@ export function useCrashNotification() {
 
   useEffect(() => {
     const checkCrashes = async () => {
-      const config = getStoredSettings();
-
-      // Check if browser notifications are enabled
-      if (!config.enableBrowserNotifications) {
-        return;
-      }
-
-      // Check browser permission
-      if (typeof window === 'undefined' || !('Notification' in window)) {
-        return;
-      }
-
-      if (Notification.permission !== 'granted') {
-        return;
-      }
-
       try {
+        const config = getStoredSettings();
+
+        // Check if browser notifications are enabled
+        if (!config.enableBrowserNotifications) {
+          return;
+        }
+
+        // Check browser permission
+        if (typeof window === 'undefined' || !('Notification' in window)) {
+          return;
+        }
+
+        let isGranted = false;
+        try {
+          isGranted = Notification.permission === 'granted';
+        } catch (e) {
+          console.warn('[Notification Check Blocked by Sandbox]', e);
+        }
+
+        if (!isGranted) {
+          return;
+        }
+
         const data = await invoke<CrashData | null>('get_crash_suspects');
         
         if (!data || !data.suspects || data.suspects.length === 0) {
